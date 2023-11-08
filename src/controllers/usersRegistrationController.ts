@@ -36,33 +36,17 @@ export const userOnboarding = async (req: Request, res: Response) => {
         salt: salt,
         hashpassword: hashpassword,
       },
-      select: {
-        email: true,
-        firstname: true,
-        lastname: true,
-        password: true,
-        company: true,
-        salt: true,
-        hashpassword: true,
-      },
     });
 
     if (userReponse) {
-      const tokenAuth = await usersAuth({
-        email: email,
-        firstname: firstname,
-        lastname: lastname,
-        password: password,
-        company: company,
-        salt: salt,
-        hashpassword: hashpassword,
-      });
-      res.json({ authToken: tokenAuth, status: true });
+      res.json({ message:"registration was successful", status: true  , response:userReponse});
     }
   } catch {
     res.json({ message: "error occured" });
   }
 };
+
+
 
 export const userLogin = async (
   req: Request,
@@ -71,15 +55,27 @@ export const userLogin = async (
 ) => {
   const { email, password } = <ILogin>req.body;
   // const auth = req.get("Authorization");
-  const usersResponse = await prisma.user.findFirst({
+  const usersLoginResponse = await prisma.user.findFirst({
     where: {
       email: email,
       password: password,
     },
+    select: {
+        email: true,
+        firstname: true,
+        lastname: true,
+        password: true,
+        company: true,
+        salt: true,
+        hashpassword: true,
+      },
   });
 
-  if (usersResponse) {
-    res.json({ response: usersResponse, status: true });
+  if (usersLoginResponse) {
+    const tokenAuth = await usersAuth(usersLoginResponse as IRegistration) ;
+     if(tokenAuth){  
+         res.json({ authToken: tokenAuth, status: true });
+     }
   }
 
   res.json({ response: "", status: false });
