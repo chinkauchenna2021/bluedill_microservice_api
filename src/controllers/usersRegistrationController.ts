@@ -55,28 +55,36 @@ export const userLogin = async (
 ) => {
   const { email, password } = <ILogin>req.body;
   // const auth = req.get("Authorization");
-  const usersLoginResponse = await prisma.user.findFirst({
-    where: {
-      email: email,
-      password: password,
-    },
-    select: {
-        email: true,
-        firstname: true,
-        lastname: true,
-        password: true,
-        company: true,
-        salt: true,
-        hashpassword: true,
-      },
-  });
+  try{
 
-  if (usersLoginResponse) {
-    const tokenAuth = await usersAuth(usersLoginResponse as IRegistration) ;
-     if(tokenAuth){  
-         res.json({ authToken: tokenAuth, status: true });
-     }
+    const usersLoginResponse = await prisma.user.findFirst({
+        where: {
+          email: email,
+          password: password,
+        },
+        select: {
+            email: true,
+            firstname: true,
+            lastname: true,
+            password: true,
+            company: true,
+            salt: true,
+            hashpassword: true,
+          },
+      });
+    
+      if (usersLoginResponse) {
+        const tokenAuth = await usersAuth(usersLoginResponse as IRegistration) ;
+         if(tokenAuth){  
+             res.json({ authToken: tokenAuth, status: true });
+         }
+      }
+    
+      res.json({ response: "", status: false });
+
+  }catch{
+    res.json({ response: "error occured", status: false });
+ 
   }
-
-  res.json({ response: "", status: false });
+ 
 };

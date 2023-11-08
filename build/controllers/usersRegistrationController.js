@@ -45,27 +45,9 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 salt: salt,
                 hashpassword: hashpassword,
             },
-            select: {
-                email: true,
-                firstname: true,
-                lastname: true,
-                password: true,
-                company: true,
-                salt: true,
-                hashpassword: true,
-            },
         }));
         if (userReponse) {
-            const tokenAuth = yield (0, useHook_1.usersAuth)({
-                email: email,
-                firstname: firstname,
-                lastname: lastname,
-                password: password,
-                company: company,
-                salt: salt,
-                hashpassword: hashpassword,
-            });
-            res.json({ authToken: tokenAuth, status: true });
+            res.json({ message: "registration was successful", status: true, response: userReponse });
         }
     }
     catch (_c) {
@@ -76,15 +58,32 @@ exports.userOnboarding = userOnboarding;
 const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     // const auth = req.get("Authorization");
-    const usersResponse = yield client_1.default.user.findFirst({
-        where: {
-            email: email,
-            password: password,
-        },
-    });
-    if (usersResponse) {
-        res.json({ response: usersResponse, status: true });
+    try {
+        const usersLoginResponse = yield client_1.default.user.findFirst({
+            where: {
+                email: email,
+                password: password,
+            },
+            select: {
+                email: true,
+                firstname: true,
+                lastname: true,
+                password: true,
+                company: true,
+                salt: true,
+                hashpassword: true,
+            },
+        });
+        if (usersLoginResponse) {
+            const tokenAuth = yield (0, useHook_1.usersAuth)(usersLoginResponse);
+            if (tokenAuth) {
+                res.json({ authToken: tokenAuth, status: true });
+            }
+        }
+        res.json({ response: "", status: false });
     }
-    res.json({ response: "", status: false });
+    catch (_d) {
+        res.json({ response: "error occured", status: false });
+    }
 });
 exports.userLogin = userLogin;
