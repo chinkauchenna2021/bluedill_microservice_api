@@ -20,19 +20,19 @@ const generateSalt = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield bcrypt_1.default.genSalt();
 });
 exports.generateSalt = generateSalt;
-const hashPass = (password, salt) => {
-    return bcrypt_1.default.hash(password, salt);
-};
+const hashPass = (password, salt) => __awaiter(void 0, void 0, void 0, function* () {
+    return yield bcrypt_1.default.hash(password, salt);
+});
 exports.hashPass = hashPass;
 const usersAuth = (userRegisterData) => __awaiter(void 0, void 0, void 0, function* () {
-    const authResponse = jsonwebtoken_1.default.sign(userRegisterData, config_1.AUTH_SECRET_KEY, { expiresIn: "1d" });
+    const authResponse = yield jsonwebtoken_1.default.sign(userRegisterData, config_1.AUTH_SECRET_KEY, { expiresIn: "1d" });
     return authResponse;
 });
 exports.usersAuth = usersAuth;
 const verifyUserAuth = (req) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.get("Authorization");
-    const verifiedToken = jsonwebtoken_1.default.verify(token === null || token === void 0 ? void 0 : token.split(' ')[1], config_1.AUTH_SECRET_KEY);
-    if (verifiedToken !== null) {
+    const verifiedToken = yield jsonwebtoken_1.default.verify(token === null || token === void 0 ? void 0 : token.split(' ')[1], config_1.AUTH_SECRET_KEY);
+    if (verifiedToken) {
         req.user = verifiedToken;
         return true;
     }

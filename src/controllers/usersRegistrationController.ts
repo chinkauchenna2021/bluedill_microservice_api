@@ -88,3 +88,20 @@ export const userLogin = async (
   }
  
 };
+
+
+
+export const userRecoverPassword = async (req:Request , res:Response , next:NextFunction)=>{
+       const {email} = <IRegistration>req.body;
+      try{
+        const usersRecoveryData = await prisma.user?.findFirst({where:{email:email}})
+        if(usersRecoveryData){
+               res.json({message:"user is avaliable" , recoveryData:usersRecoveryData , status : true })
+        }
+        res.json({message:"user not found", status : false})
+
+      }catch{
+        res.json({ response: "error occured", status: false });
+      }
+      
+}
