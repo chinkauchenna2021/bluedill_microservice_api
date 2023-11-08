@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">= 16.13"
+  },
   "scripts": {
     "build": "rimraf ./build && tsc ",
     "dev": "npm run build && nodemon build/index.js",
-    "start":"node build/index.js"
+    "start":"node build/index.js --ignore-engines"
   },
   "keywords": [],
   "author": "",
