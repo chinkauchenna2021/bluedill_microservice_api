@@ -5,4 +5,4 @@ const router = express.Router()
 router.route('/').get(homePage)
 router.route("/useronboarding").post(userOnboarding)
 
-export default router
+export default router ; 
