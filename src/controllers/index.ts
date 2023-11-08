@@ -1,3 +1,3 @@
-import {usersUnboarding} from './usersRegistrationController'
+import {userOnboarding} from './usersRegistrationController'
 
-export {usersUnboarding};
+export {userOnboarding};

@@ -1,8 +1,8 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
-import { usersUnboarding } from '../controllers';
+import { userOnboarding } from '../controllers';
 
 const router = express.Router()
 
-router.get("/", usersUnboarding)
+router.route("/useronboarding").post(userOnboarding)
 
 export default router
