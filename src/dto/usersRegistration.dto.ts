@@ -6,3 +6,9 @@ export interface IRegistration {
   password: string;
   company: string;
 }
+
+
+export interface ILogin{
+  email:string 
+  password:string ;
+}

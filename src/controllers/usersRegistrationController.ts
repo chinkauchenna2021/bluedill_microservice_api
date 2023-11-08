@@ -1,5 +1,5 @@
 import { Request, Response , NextFunction } from 'express';
-import { IRegistration } from '../dto/usersRegistration.dto';
+import { IRegistration  , ILogin} from '../dto/usersRegistration.dto';
 import { generateSalt } from '../utilities/useHook';
 import prisma from '../model/prismaClient/client';
 
@@ -37,9 +37,19 @@ export const userOnboarding = async (req:Request , res:Response)=>{
 }
 
 export const userLogin = async (req:Request , res:Response , next:NextFunction)=>{
-     
- 
+    const {email , password}  = <ILogin>req.body;
+    const usersResponse = await  prisma.user.findFirst({
+        where:{
+            email:email,
+            password:password
+        }
+      })
+    
+      if(usersResponse){
+        res.json({response:usersResponse , status:true})
+      }
 
+      res.json({response:"" ,status:false})
 
 }
 
