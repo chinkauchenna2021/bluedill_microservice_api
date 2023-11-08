@@ -5,6 +5,8 @@ export interface IRegistration {
   lastname: string;
   password: string;
   company: string;
+  salt?: string
+  hashpassword?: string 
 }
 
 

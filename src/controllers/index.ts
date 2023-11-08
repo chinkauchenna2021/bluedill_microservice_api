@@ -1,3 +1,3 @@
-import {userOnboarding , homePage , userLogin} from './usersRegistrationController'
+export * from './usersRegistrationController'
 
-export {userOnboarding , homePage , userLogin};
+// export {userOnboarding , homePage , userLogin};

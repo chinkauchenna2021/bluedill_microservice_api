@@ -20,12 +20,22 @@ const homePage = (req, res) => {
 };
 exports.homePage = homePage;
 const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     console.log(req.body);
     try {
         const salt = yield (0, useHook_1.generateSalt)();
-        const { email, firstname, lastname, password, company } = req.body;
-        yield ((_a = client_1.default.user) === null || _a === void 0 ? void 0 : _a.create({
+        const { email, firstname, lastname, password, company } = (req.body);
+        const userConfiguration = { email, firstname, lastname, password, company };
+        //    const userAuthToken  = await usersAuth(userConfiguration , salt);
+        const genSalt = yield (0, useHook_1.generateSalt)();
+        const hashpassword = yield (0, useHook_1.hashPass)(password, genSalt);
+        const isUserExist = yield ((_a = client_1.default.user) === null || _a === void 0 ? void 0 : _a.findFirst({
+            where: { email: email },
+        }));
+        if (isUserExist) {
+            res.json({ message: "user already exist", status: false });
+        }
+        const userReponse = yield ((_b = client_1.default.user) === null || _b === void 0 ? void 0 : _b.create({
             data: {
                 email: email,
                 firstname: firstname,
@@ -33,16 +43,48 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 password: password,
                 company: company,
                 salt: salt,
-                authToken: ""
-            }
+                hashpassword: hashpassword,
+            },
+            select: {
+                email: true,
+                firstname: true,
+                lastname: true,
+                password: true,
+                company: true,
+                salt: true,
+                hashpassword: true,
+            },
         }));
-        res.json({ status: true, email, firstname, lastname, password, company, salt });
+        if (userReponse) {
+            const tokenAuth = yield (0, useHook_1.usersAuth)({
+                email: email,
+                firstname: firstname,
+                lastname: lastname,
+                password: password,
+                company: company,
+                salt: salt,
+                hashpassword: hashpassword,
+            });
+            res.json({ authToken: tokenAuth, status: true });
+        }
     }
-    catch (_b) {
+    catch (_c) {
         res.json({ message: "error occured" });
     }
 });
 exports.userOnboarding = userOnboarding;
 const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = req.body;
+    // const auth = req.get("Authorization");
+    const usersResponse = yield client_1.default.user.findFirst({
+        where: {
+            email: email,
+            password: password,
+        },
+    });
+    if (usersResponse) {
+        res.json({ response: usersResponse, status: true });
+    }
+    res.json({ response: "", status: false });
 });
 exports.userLogin = userLogin;

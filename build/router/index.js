@@ -7,5 +7,6 @@ const express_1 = __importDefault(require("express"));
 const controllers_1 = require("../controllers");
 const router = express_1.default.Router();
 router.route('/').get(controllers_1.homePage);
+router.route("/login").post(controllers_1.userLogin);
 router.route("/useronboarding").post(controllers_1.userOnboarding);
 exports.default = router;

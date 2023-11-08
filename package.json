@@ -9,7 +9,7 @@
   "scripts": {
     "build": "rimraf ./build && tsc ",
     "dev": "npm run build && nodemon build/index.js",
-    "start":"node build/index.js --ignore-engines"
+    "start": "node build/index.js --ignore-engines"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +28,7 @@
   "dependencies": {
     "@prisma/client": "^5.5.2",
     "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.5",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",

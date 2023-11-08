@@ -1,0 +1,18 @@
+{
+  "status": true,
+  "email": "uchennachinka2021@gmail.com",
+  "firstname": "uchenna",
+  "lastname": "chinka",
+  "password": "opengate2023",
+  "company": "mikemedia",
+  "salt": "$2b$10$9dTY2lIxFMcbaMbjrbmefO"
+}
+
+
+{
+  "email":"uchennachinka2021@gmail.com",
+  "firstname":"uchenna",
+  "lastname":"chinka",
+  "password":"opengate2023",
+  "company":"mikemedia"
+}
