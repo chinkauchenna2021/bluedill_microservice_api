@@ -4,6 +4,13 @@ import { generateSalt } from '../utilities/useHook';
 import prisma from '../model/prismaClient/client';
 
 
+export const homePage = (req:Request , res:Response)=>{
+    res.json({message:"running successfully"})
+}
+
+
+
+
 export const userOnboarding = async (req:Request , res:Response)=>{
      console.log(req.body)
     try{
@@ -28,7 +35,6 @@ export const userOnboarding = async (req:Request , res:Response)=>{
 }
  
 }
-
 
 export const userLogin = async (req:Request , res:Response , next:NextFunction)=>{
      

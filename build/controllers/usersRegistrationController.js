@@ -12,9 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userOnboarding = void 0;
+exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
+const homePage = (req, res) => {
+    res.json({ message: "running successfully" });
+};
+exports.homePage = homePage;
 const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     console.log(req.body);
@@ -39,3 +43,6 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.userOnboarding = userOnboarding;
+const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+});
+exports.userLogin = userLogin;
