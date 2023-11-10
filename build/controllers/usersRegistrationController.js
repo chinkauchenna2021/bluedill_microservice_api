@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.userAddDocument = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
 const homePage = (req, res) => {
@@ -47,7 +47,11 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
             },
         }));
         if (userReponse) {
-            res.json({ message: "registration was successful", status: true, response: userReponse });
+            res.json({
+                message: "registration was successful",
+                status: true,
+                response: userReponse,
+            });
         }
     }
     catch (_c) {
@@ -91,14 +95,50 @@ const userRecoverPassword = (req, res, next) => __awaiter(void 0, void 0, void 0
     var _e;
     const { email } = req.body;
     try {
-        const usersRecoveryData = yield ((_e = client_1.default.user) === null || _e === void 0 ? void 0 : _e.findFirst({ where: { email: email } }));
+        const usersRecoveryData = yield ((_e = client_1.default.user) === null || _e === void 0 ? void 0 : _e.findFirst({
+            where: { email: email },
+        }));
         if (usersRecoveryData) {
-            res.json({ message: "user is avaliable", recoveryData: usersRecoveryData, status: true });
+            res.json({
+                message: "user is avaliable",
+                recoveryData: usersRecoveryData,
+                status: true,
+            });
         }
-        res.json({ message: "user not found", status: false });
+        res.json({ message: "user not found", status: false, user: usersRecoveryData });
     }
     catch (_f) {
         res.json({ response: "error occured", status: false });
     }
 });
 exports.userRecoverPassword = userRecoverPassword;
+const searchUsersByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _g;
+    const { email } = req.body;
+    try {
+        const searchUsersData = yield ((_g = client_1.default.user) === null || _g === void 0 ? void 0 : _g.findFirst({
+            where: { email: email },
+        }));
+        if (searchUsersData) {
+            res.json({
+                message: "user is avaliable",
+                recoveryData: searchUsersData,
+                status: true,
+            });
+        }
+        res.json({ message: "user not found", status: false, user: searchUsersData });
+    }
+    catch (_h) {
+        res.json({ response: "error occured", status: false });
+    }
+});
+exports.searchUsersByEmail = searchUsersByEmail;
+const userAddDocument = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    try {
+    }
+    catch (_j) {
+        res.json({ response: "error occured", status: false });
+    }
+});
+exports.userAddDocument = userAddDocument;

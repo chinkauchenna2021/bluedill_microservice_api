@@ -39,14 +39,16 @@ export const userOnboarding = async (req: Request, res: Response) => {
     });
 
     if (userReponse) {
-      res.json({ message:"registration was successful", status: true  , response:userReponse});
+      res.json({
+        message: "registration was successful",
+        status: true,
+        response: userReponse,
+      });
     }
   } catch {
     res.json({ message: "error occured" });
   }
 };
-
-
 
 export const userLogin = async (
   req: Request,
@@ -55,53 +57,95 @@ export const userLogin = async (
 ) => {
   const { email, password } = <ILogin>req.body;
   // const auth = req.get("Authorization");
-  try{
-
+  try {
     const usersLoginResponse = await prisma.user.findFirst({
-        where: {
-          email: email,
-          password: password,
-        },
-        select: {
-            email: true,
-            firstname: true,
-            lastname: true,
-            password: true,
-            company: true,
-            salt: true,
-            hashpassword: true,
-          },
-      });
-    
-      if (usersLoginResponse) {
-        const tokenAuth = await usersAuth(usersLoginResponse as IRegistration) ;
-         if(tokenAuth){  
-             res.json({ authToken: tokenAuth, status: true });
-         }
-      }
-    
-      res.json({ response: "", status: false });
+      where: {
+        email: email,
+        password: password,
+      },
+      select: {
+        email: true,
+        firstname: true,
+        lastname: true,
+        password: true,
+        company: true,
+        salt: true,
+        hashpassword: true,
+      },
+    });
 
-  }catch{
+    if (usersLoginResponse) {
+      const tokenAuth = await usersAuth(usersLoginResponse as IRegistration);
+      if (tokenAuth) {
+        res.json({ authToken: tokenAuth, status: true });
+      }
+    }
+
+    res.json({ response: "", status: false });
+  } catch {
     res.json({ response: "error occured", status: false });
- 
   }
- 
 };
 
+export const userRecoverPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email } = <IRegistration>req.body;
+  try {
+    const usersRecoveryData = await prisma.user?.findFirst({
+      where: { email: email },
+    });
+    if (usersRecoveryData) {
+      res.json({
+        message: "user is avaliable",
+        recoveryData: usersRecoveryData,
+        status: true,
+      });
+    }
+    res.json({ message: "user not found", status: false  , user:usersRecoveryData});
+  } catch {
+    res.json({ response: "error occured", status: false });
+  }
+};
+
+export const searchUsersByEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email } = <IRegistration>req.body;
+  try {
+    const searchUsersData = await prisma.user?.findFirst({
+      where: { email: email },
+    });
+    if (searchUsersData) {
+      res.json({
+        message: "user is avaliable",
+        recoveryData: searchUsersData,
+        status: true,
+      });
+    }
+    res.json({ message: "user not found", status: false  , user:searchUsersData});
+  } catch {
+    res.json({ response: "error occured", status: false });
+  }
+};
+
+export const userAddDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email } = <IRegistration>req.body;
+  try {
 
 
-export const userRecoverPassword = async (req:Request , res:Response , next:NextFunction)=>{
-       const {email} = <IRegistration>req.body;
-      try{
-        const usersRecoveryData = await prisma.user?.findFirst({where:{email:email}})
-        if(usersRecoveryData){
-               res.json({message:"user is avaliable" , recoveryData:usersRecoveryData , status : true })
-        }
-        res.json({message:"user not found", status : false})
 
-      }catch{
-        res.json({ response: "error occured", status: false });
-      }
-      
-}
+    
+
+  } catch {
+    res.json({ response: "error occured", status: false });
+  }
+};
