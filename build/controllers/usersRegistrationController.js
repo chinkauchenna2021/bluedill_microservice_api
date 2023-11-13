@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userAddDocument = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.uploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
 const homePage = (req, res) => {
@@ -133,7 +133,7 @@ const searchUsersByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.searchUsersByEmail = searchUsersByEmail;
-const userAddDocument = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const uploadTemplates = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { email } = req.body;
     try {
     }
@@ -141,4 +141,4 @@ const userAddDocument = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         res.json({ response: "error occured", status: false });
     }
 });
-exports.userAddDocument = userAddDocument;
+exports.uploadTemplates = uploadTemplates;

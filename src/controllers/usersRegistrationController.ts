@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from "express";
 import { IRegistration, ILogin } from "../dto/usersRegistration.dto";
 import { generateSalt, hashPass, usersAuth } from "../utilities/useHook";
 import prisma from "../model/prismaClient/client";
+import { ClassValidation } from "../dto/ClassValidation";
+import { plainToClass } from "class-transformer";
+import { validate } from "class-validator";
+
+
 
 export const homePage = (req: Request, res: Response) => {
   res.json({ message: "running successfully" });
@@ -11,9 +16,15 @@ export const userOnboarding = async (req: Request, res: Response) => {
   console.log(req.body);
   try {
     const salt = await generateSalt();
-    const { email, firstname, lastname, password, company } = <IRegistration>(
-      req.body
-    );
+
+    const validatedData = plainToClass(ClassValidation , req.body)
+    const validationResult = validate(validatedData , {validationError:{target:true}})
+
+if((await validationResult).length !== 0 ){
+  return res.status(400).json(validationResult);
+}
+
+    const { email, firstname, lastname, password, company } = validatedData
     const userConfiguration = { email, firstname, lastname, password, company };
     //    const userAuthToken  = await usersAuth(userConfiguration , salt);
     const genSalt = await generateSalt();
@@ -133,17 +144,15 @@ export const searchUsersByEmail = async (
   }
 };
 
-export const userAddDocument = async (
+export const uploadTemplates = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const { email } = <IRegistration>req.body;
   try {
-
-
-
-    
+      
+ 
 
   } catch {
     res.json({ response: "error occured", status: false });
