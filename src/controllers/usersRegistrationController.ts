@@ -18,9 +18,9 @@ export const userOnboarding = async (req: Request, res: Response) => {
     const salt = await generateSalt();
 
     const validatedData = plainToClass(ClassValidation , req.body)
-    const validationResult = validate(validatedData , {validationError:{target:true}})
+    const validationResult = await validate(validatedData , {validationError:{target:true}})
 
-if((await validationResult).length !== 0 ){
+if( validationResult.length !== 0 ){
   return res.status(400).json(validationResult);
 }
 
