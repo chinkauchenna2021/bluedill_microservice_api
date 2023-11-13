@@ -20,14 +20,13 @@ const storage = multer.diskStorage({
 
 
 router.route('/').get(homePage)
-router.route("/login").post(userLogin)
-router.route("/useronboarding").post(userOnboarding)
-router.route("/passwordrecovery").post(userRecoverPassword)
+router.get("/getTemplates" , getAllTemplates)
+router.post("/login",userLogin)
+router.post("/useronboarding" , userOnboarding)
+router.post("/passwordrecovery",userRecoverPassword)
 
-
-router.route("/getTemplates").get(getAllTemplates)
 router.use(VerifiedAuthToken);
-router.route('/searchuserbyemail').post(searchUsersByEmail)
-router.route("/uploadsingletemplates").post(upload,adminUploadTemplates)
+router.post('/searchuserbyemail' , searchUsersByEmail)
+router.post("/uploadsingletemplates" , upload,adminUploadTemplates)
 
 export default router ; 

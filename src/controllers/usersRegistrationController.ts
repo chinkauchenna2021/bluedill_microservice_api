@@ -172,13 +172,8 @@ res.json({response:"something went wrong" , status:false})
 export const getAllTemplates = async(req:Request , res:Response , next:NextFunction)=>{
    try{
      const allDocuments = await prisma.document?.findMany();
-       if(allDocuments){
-
         res.json({response:allDocuments , status:true})
-       }
-       res.json({response:"no document available" , status : false})
-   }catch{
-   
+   }catch(err){
      res.json({response:"server issue occured", status:false})
    }
 }
