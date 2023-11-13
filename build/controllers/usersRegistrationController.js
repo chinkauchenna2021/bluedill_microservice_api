@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
 const ClassValidation_1 = require("../dto/ClassValidation");
@@ -83,7 +83,7 @@ const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                 res.json({ authToken: tokenAuth, status: true, response: usersLoginResponse });
             }
         }
-        res.json({ response: "user login not successful", status: false });
+        res.json({ response: "user not found ", status: false });
     }
     catch (_d) {
         res.json({ response: "error occured", status: false });
@@ -169,3 +169,34 @@ const getAllTemplates = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.getAllTemplates = getAllTemplates;
+const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, email } = req.user;
+    const { receiversemail, message } = req.body;
+    try {
+        const recieversData = yield client_1.default.user.findFirst({ where: { email: receiversemail } });
+        if ((recieversData === null || recieversData === void 0 ? void 0 : recieversData.id) != null) {
+            const chatusers = yield client_1.default.chat.create({
+                data: {
+                    userEmail: email,
+                    userMessage: message,
+                    senderUserId: id,
+                    receiverUserId: recieversData === null || recieversData === void 0 ? void 0 : recieversData.id,
+                    isReceivedStatus: true,
+                    user: {
+                        connect: {
+                            id: recieversData === null || recieversData === void 0 ? void 0 : recieversData.id,
+                        }
+                    }
+                }
+            });
+            if (chatusers.id != null) {
+                res.json({ response: `message sent to user with the id ${recieversData.id}`, status: true, message: message });
+            }
+        }
+        res.json({ response: "reciever does not exist ", status: false });
+    }
+    catch (_l) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.usersChat = usersChat;

@@ -16,11 +16,30 @@ export interface ILogin{
 }
 
 
-export  interface IUsersRequest {
-
-
+export  interface IUsersChat {
+     id:string 
+     receiversemail:string
+     message:string;
+     isReceivedStatus:boolean
 
 }
+
+
+// id      String    @id @default(uuid())
+// userEmail String @unique
+// userMessage String
+// senderUserId Int
+// receiverUserId Int
+// isReceivedStatus Boolean @default(false)
+// user    User @relation(fields: [userId], references: [id])
+// userId  String
+// createdAt  DateTime   @default(now())
+// updatedAt  DateTime   @updatedAt   
+
+
+
+
+
 
 export interface IDocument{
  docid:string ,

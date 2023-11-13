@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { IRegistration, ILogin, IDocument } from "../dto/usersRegistration.dto";
+import { IRegistration, ILogin, IDocument, IUsersChat } from "../dto/usersRegistration.dto";
 import { generateSalt, hashPass, usersAuth } from "../utilities/useHook";
 import prisma from "../model/prismaClient/client";
 import { ClassValidation } from "../dto/ClassValidation";
@@ -175,4 +175,47 @@ export const getAllTemplates = async(req:Request , res:Response , next:NextFunct
    }catch(err){
      res.json({response:"server issue occured", status:false})
    }
+}
+
+
+
+
+
+export const usersChat = async (req:Request , res:Response , nexr:NextFunction)=>{
+  const {id , email} = <IRegistration>req.user ; 
+
+  const {receiversemail , message  } = <IUsersChat>req.body;
+
+try{
+  const recieversData = await prisma.user.findFirst({where:{email:receiversemail}})
+
+   if(recieversData?.id != null){
+
+     const chatusers = await prisma.chat.create({
+       data:{
+         userEmail:email,
+         userMessage:message,
+         senderUserId: id as string,
+         receiverUserId: recieversData?.id as string,
+         isReceivedStatus: true,
+         user:{
+           connect:{
+             id:recieversData?.id as string,
+           }
+         }
+       }
+     })
+
+
+     if(chatusers.id != null){
+      res.json({response:`message sent to user with the id ${recieversData.id}` , status:true , message:message})
+     }
+   }
+
+   res.json({response:"reciever does not exist " , status:false})
+  
+}catch{
+  res.json({response:"server issue occured", status:false})
+
+}
 }

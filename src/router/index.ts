@@ -1,5 +1,5 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
-import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates} from '../controllers';
+import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat} from '../controllers';
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
 
@@ -27,6 +27,7 @@ router.post("/passwordrecovery",userRecoverPassword)
 
 router.use(VerifiedAuthToken);
 router.post('/searchuserbyemail' , searchUsersByEmail)
-router.post("/uploadsingletemplates" , upload,adminUploadTemplates)
+router.post("/uploadsingletemplates",upload,adminUploadTemplates)
+router.post("/chatusers" , usersChat);
 
 export default router ; 

@@ -26,4 +26,5 @@ router.post("/passwordrecovery", controllers_1.userRecoverPassword);
 router.use(verifyAuth_1.verfyAuthToken);
 router.post('/searchuserbyemail', controllers_1.searchUsersByEmail);
 router.post("/uploadsingletemplates", upload, controllers_1.adminUploadTemplates);
+router.post("/chatusers", controllers_1.usersChat);
 exports.default = router;
