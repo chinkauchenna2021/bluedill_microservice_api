@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { IRegistration, ILogin } from "../dto/usersRegistration.dto";
+import { IRegistration, ILogin, IDocument } from "../dto/usersRegistration.dto";
 import { generateSalt, hashPass, usersAuth } from "../utilities/useHook";
 import prisma from "../model/prismaClient/client";
 import { ClassValidation } from "../dto/ClassValidation";
 import { plainToClass } from "class-transformer";
 import { validate } from "class-validator";
+import { Multer } from "multer";
 
 
 
@@ -73,26 +74,17 @@ export const userLogin = async (
       where: {
         email: email,
         password: password,
-      },
-      select: {
-        email: true,
-        firstname: true,
-        lastname: true,
-        password: true,
-        company: true,
-        salt: true,
-        hashpassword: true,
-      },
+      }
     });
 
     if (usersLoginResponse) {
       const tokenAuth = await usersAuth(usersLoginResponse as IRegistration);
       if (tokenAuth) {
-        res.json({ authToken: tokenAuth, status: true });
+        res.json({ authToken: tokenAuth, status: true  , response:usersLoginResponse});
       }
     }
 
-    res.json({ response: "", status: false });
+    res.json({ response: "user login not successful", status: false });
   } catch {
     res.json({ response: "error occured", status: false });
   }
@@ -144,17 +136,49 @@ export const searchUsersByEmail = async (
   }
 };
 
-export const uploadTemplates = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { email } = <IRegistration>req.body;
-  try {
-      
- 
 
-  } catch {
-    res.json({ response: "error occured", status: false });
+export const adminUploadTemplates = async (req:Request , res:Response , next:NextFunction) =>{
+
+  const {docid , docname , templateType } =  <IDocument>req.body;
+  const  {id} =  <IRegistration>req.user ; 
+  const fileupload =  req.file as unknown as Express.Multer.File ; 
+  const filename = fileupload.filename as string ; 
+
+  try{
+
+    let updateTemplate = await prisma.document?.create({
+      data:{
+       docid:docid, 
+       docname:docname,
+       doclink:filename,
+       userUpdateDoc:id as string,
+       templateType:templateType,
+      }
+  })
+ 
+  if(updateTemplate){
+ 
+   res.json({response:"template added successfully" , status:true})
   }
-};
+ 
+res.json({response:"something went wrong" , status:false}) 
+
+  }catch(err){
+    res.json({response:"server error", status:false})
+  }
+}
+
+
+export const getAllTemplates = async(req:Request , res:Response , next:NextFunction)=>{
+   try{
+     const allDocuments = await prisma.document?.findMany();
+       if(allDocuments){
+
+        res.json({response:allDocuments , status:true})
+       }
+       res.json({response:"no document available" , status : false})
+   }catch{
+   
+     res.json({response:"server issue occured", status:false})
+   }
+}

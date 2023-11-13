@@ -14,3 +14,16 @@ export interface ILogin{
   email:string 
   password:string ;
 }
+
+
+export  interface IUsersRequest {
+
+
+
+}
+
+export interface IDocument{
+ docid:string ,
+ docname:string,
+ templateType:string 
+}
