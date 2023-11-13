@@ -83,8 +83,7 @@ export const userLogin = async (
         res.json({ authToken: tokenAuth, status: true  , response:usersLoginResponse});
       }
     }
-
-    res.json({ response: "user login not successful", status: false });
+    res.json({ response: "user not found ", status: false });
   } catch {
     res.json({ response: "error occured", status: false });
   }
