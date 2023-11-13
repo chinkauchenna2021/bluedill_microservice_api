@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.getReceiversMessagesFromSender = exports.getUserMessagesToReceiver = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
 const ClassValidation_1 = require("../dto/ClassValidation");
@@ -28,7 +28,9 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const salt = yield (0, useHook_1.generateSalt)();
         const validatedData = (0, class_transformer_1.plainToClass)(ClassValidation_1.ClassValidation, req.body);
-        const validationResult = yield (0, class_validator_1.validate)(validatedData, { validationError: { target: true } });
+        const validationResult = yield (0, class_validator_1.validate)(validatedData, {
+            validationError: { target: true },
+        });
         if (validationResult.length !== 0) {
             return res.status(400).json(validationResult);
         }
@@ -75,12 +77,16 @@ const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             where: {
                 email: email,
                 password: password,
-            }
+            },
         });
         if (usersLoginResponse) {
             const tokenAuth = yield (0, useHook_1.usersAuth)(usersLoginResponse);
             if (tokenAuth) {
-                res.json({ authToken: tokenAuth, status: true, response: usersLoginResponse });
+                res.json({
+                    authToken: tokenAuth,
+                    status: true,
+                    response: usersLoginResponse,
+                });
             }
         }
         res.json({ response: "user not found ", status: false });
@@ -104,7 +110,11 @@ const userRecoverPassword = (req, res, next) => __awaiter(void 0, void 0, void 0
                 status: true,
             });
         }
-        res.json({ message: "user not found", status: false, user: usersRecoveryData });
+        res.json({
+            message: "user not found",
+            status: false,
+            user: usersRecoveryData,
+        });
     }
     catch (_f) {
         res.json({ response: "error occured", status: false });
@@ -125,7 +135,11 @@ const searchUsersByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 status: true,
             });
         }
-        res.json({ message: "user not found", status: false, user: searchUsersData });
+        res.json({
+            message: "user not found",
+            status: false,
+            user: searchUsersData,
+        });
     }
     catch (_h) {
         res.json({ response: "error occured", status: false });
@@ -146,7 +160,7 @@ const adminUploadTemplates = (req, res, next) => __awaiter(void 0, void 0, void 
                 doclink: filename,
                 userUpdateDoc: id,
                 templateType: templateType,
-            }
+            },
         }));
         if (updateTemplate) {
             res.json({ response: "template added successfully", status: true });
@@ -173,7 +187,9 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
     const { id, email } = req.user;
     const { receiversemail, message } = req.body;
     try {
-        const recieversData = yield client_1.default.user.findFirst({ where: { email: receiversemail } });
+        const recieversData = yield client_1.default.user.findFirst({
+            where: { email: receiversemail },
+        });
         if ((recieversData === null || recieversData === void 0 ? void 0 : recieversData.id) != null) {
             const chatusers = yield client_1.default.chat.create({
                 data: {
@@ -185,12 +201,16 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
                     user: {
                         connect: {
                             id: recieversData === null || recieversData === void 0 ? void 0 : recieversData.id,
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             });
             if (chatusers.id != null) {
-                res.json({ response: `message sent to user with the id ${recieversData.id}`, status: true, message: message });
+                res.json({
+                    response: `message sent to user with the id ${recieversData.id}`,
+                    status: true,
+                    message: message,
+                });
             }
         }
         res.json({ response: "reciever does not exist ", status: false });
@@ -200,3 +220,44 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.usersChat = usersChat;
+const getUserMessagesToReceiver = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    const { id } = req.user;
+    try {
+        const receiverData = yield client_1.default.user.findFirst({
+            where: { email: email },
+        });
+        if ((receiverData === null || receiverData === void 0 ? void 0 : receiverData.id) != null) {
+            const usersAllMessages = yield client_1.default.chat.findMany({
+                where: {
+                    senderUserId: id,
+                    receiverUserId: receiverData.id,
+                },
+            });
+            res.json({ response: usersAllMessages, status: true });
+        }
+        res.json({
+            response: `no such user with email ${email} exist `,
+            status: false,
+        });
+    }
+    catch (_m) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.getUserMessagesToReceiver = getUserMessagesToReceiver;
+const getReceiversMessagesFromSender = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    try {
+        const usersReceivedMessaages = yield client_1.default.chat.findMany({
+            where: {
+                senderUserId: email,
+            },
+        });
+        res.json({ response: usersReceivedMessaages, status: true });
+    }
+    catch (_o) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.getReceiversMessagesFromSender = getReceiversMessagesFromSender;
