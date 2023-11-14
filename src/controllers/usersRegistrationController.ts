@@ -4,6 +4,7 @@ import {
   ILogin,
   IDocument,
   IUsersChat,
+  ICollaboration,
 } from "../dto/usersRegistration.dto";
 import { generateSalt, hashPass, usersAuth } from "../utilities/useHook";
 import prisma from "../model/prismaClient/client";
@@ -15,6 +16,8 @@ import { Multer } from "multer";
 export const homePage = (req: Request, res: Response) => {
   res.json({ message: "running successfully" });
 };
+
+const MAX_COLLABORATORS = 5;
 
 export const userOnboarding = async (req: Request, res: Response) => {
   console.log(req.body);
@@ -289,3 +292,94 @@ export const getReceiversMessagesFromSender = async (
     res.json({ response: "server issue occured", status: false });
   }
 };
+
+export const collaboratingUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.user;
+
+  const { docid, docname, roomId, collabUsersEmail } = <ICollaboration>req.body;
+
+  try {
+    const getCollaboratingUsers = await prisma.collaboratingUsers.findFirst({
+      where: {
+        docid: docid,
+        roomId: roomId,
+      },
+      select: {
+        collabNumber: true,
+      },
+    });
+
+    if (
+      getCollaboratingUsers?.collabNumber != undefined &&
+      getCollaboratingUsers?.collabNumber <= MAX_COLLABORATORS
+    ) {
+      const collabData = await prisma.collaboratingUsers.create({
+        data: {
+          collabNumber: collabUsersEmail.length,
+          docid: docid,
+          docname: docname,
+          roomId: roomId,
+          collabUsersEmail: collabUsersEmail,
+          user: {
+            connect: {
+              id: id,
+            },
+          },
+        },
+      });
+
+      res.json({
+        response: collabData,
+        status: true,
+        message: "collaboration created successfully ",
+      });
+    }
+
+    res.json({
+      message:
+        "collaborating users reached maximum.Collaboration for this document is closed",
+      status: false,
+    });
+  } catch {
+    res.json({ response: "server issue occured", status: false });
+  }
+};
+
+export const getRoomCollaborators = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { roomId } = req.body;
+
+  try {
+    const roomdata = await prisma.collaboratingUsers.findFirst({
+      where: {
+        roomId: roomId,
+      },
+    });
+
+    if (roomdata?.id !== undefined) {
+      res.json({ response: roomdata, status: true });
+    }
+    res.json({
+      response: roomdata,
+      statu: false,
+      message: "no such room found",
+    });
+  } catch {
+    res.json({ response: "server issue occured", status: false });
+  }
+};
+
+
+
+
+
+
+
+

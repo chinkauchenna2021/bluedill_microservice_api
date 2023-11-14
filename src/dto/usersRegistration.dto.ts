@@ -24,19 +24,24 @@ export  interface IUsersChat {
 
 }
 
-
 // id      String    @id @default(uuid())
-// userEmail String @unique
-// userMessage String
-// senderUserId Int
-// receiverUserId Int
-// isReceivedStatus Boolean @default(false)
+// collabNumber Int  @default(0)
+// docid   String 
+// docname  String 
+// roomId String
+// collabUsersEmail String[] 
 // user    User @relation(fields: [userId], references: [id])
-// userId  String
-// createdAt  DateTime   @default(now())
-// updatedAt  DateTime   @updatedAt   
+// userId String 
 
 
+export interface ICollaboration{
+  id:string 
+  collabNumber:number 
+  docid : string 
+  docname: string 
+  roomId : string
+  collabUsersEmail : string[]
+}
 
 
 

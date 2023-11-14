@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getReceiversMessagesFromSender = exports.getUserMessagesToReceiver = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.getRoomCollaborators = exports.collaboratingUsers = exports.getReceiversMessagesFromSender = exports.getUserMessagesToReceiver = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
 const ClassValidation_1 = require("../dto/ClassValidation");
@@ -22,6 +22,7 @@ const homePage = (req, res) => {
     res.json({ message: "running successfully" });
 };
 exports.homePage = homePage;
+const MAX_COLLABORATORS = 5;
 const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     console.log(req.body);
@@ -261,3 +262,70 @@ const getReceiversMessagesFromSender = (req, res, next) => __awaiter(void 0, voi
     }
 });
 exports.getReceiversMessagesFromSender = getReceiversMessagesFromSender;
+const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.user;
+    const { docid, docname, roomId, collabUsersEmail } = req.body;
+    try {
+        const getCollaboratingUsers = yield client_1.default.collaboratingUsers.findFirst({
+            where: {
+                docid: docid,
+                roomId: roomId,
+            },
+            select: {
+                collabNumber: true,
+            },
+        });
+        if ((getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) != undefined &&
+            (getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) <= MAX_COLLABORATORS) {
+            const collabData = yield client_1.default.collaboratingUsers.create({
+                data: {
+                    collabNumber: collabUsersEmail.length,
+                    docid: docid,
+                    docname: docname,
+                    roomId: roomId,
+                    collabUsersEmail: collabUsersEmail,
+                    user: {
+                        connect: {
+                            id: id,
+                        },
+                    },
+                },
+            });
+            res.json({
+                response: collabData,
+                status: true,
+                message: "collaboration created successfully ",
+            });
+        }
+        res.json({
+            message: "collaborating users reached maximum.Collaboration for this document is closed",
+            status: false,
+        });
+    }
+    catch (_p) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.collaboratingUsers = collaboratingUsers;
+const getRoomCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { roomId } = req.body;
+    try {
+        const roomdata = yield client_1.default.collaboratingUsers.findFirst({
+            where: {
+                roomId: roomId,
+            },
+        });
+        if ((roomdata === null || roomdata === void 0 ? void 0 : roomdata.id) !== undefined) {
+            res.json({ response: roomdata, status: true });
+        }
+        res.json({
+            response: roomdata,
+            statu: false,
+            message: "no such room found",
+        });
+    }
+    catch (_q) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.getRoomCollaborators = getRoomCollaborators;
