@@ -312,6 +312,7 @@ const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0,
                     id: findUpdate === null || findUpdate === void 0 ? void 0 : findUpdate.id,
                 },
                 data: {
+                    collabNumber: collabUsersEmail === null || collabUsersEmail === void 0 ? void 0 : collabUsersEmail.length,
                     collabUsersEmail: collabUsersEmail,
                 },
             }));

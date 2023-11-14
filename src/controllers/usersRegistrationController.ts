@@ -354,6 +354,7 @@ export const collaboratingUsers = async (
           id: findUpdate?.id as string,
         },
         data: {
+          collabNumber:collabUsersEmail?.length,
           collabUsersEmail: collabUsersEmail,
         },
       });
