@@ -263,6 +263,7 @@ const getReceiversMessagesFromSender = (req, res, next) => __awaiter(void 0, voi
 });
 exports.getReceiversMessagesFromSender = getReceiversMessagesFromSender;
 const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _p;
     const { id } = req.user;
     const { docid, docname, roomId, collabUsersEmail } = req.body;
     try {
@@ -275,11 +276,11 @@ const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 collabNumber: true,
             },
         });
-        if ((getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) != undefined &&
-            (getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) <= MAX_COLLABORATORS) {
+        if (getCollaboratingUsers !== undefined &&
+            (getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) == 0) {
             const collabData = yield client_1.default.collaboratingUsers.create({
                 data: {
-                    collabNumber: collabUsersEmail.length,
+                    collabNumber: collabUsersEmail === null || collabUsersEmail === void 0 ? void 0 : collabUsersEmail.length,
                     docid: docid,
                     docname: docname,
                     roomId: roomId,
@@ -297,12 +298,35 @@ const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 message: "collaboration created successfully ",
             });
         }
+        else if ((getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) != undefined &&
+            (getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) > 0 &&
+            (getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) <= MAX_COLLABORATORS) {
+            const findUpdate = yield client_1.default.collaboratingUsers.findFirst({
+                where: {
+                    docid: docid,
+                    roomId: roomId,
+                },
+            });
+            const updatesUsers = yield ((_p = client_1.default.collaboratingUsers) === null || _p === void 0 ? void 0 : _p.update({
+                where: {
+                    id: findUpdate === null || findUpdate === void 0 ? void 0 : findUpdate.id,
+                },
+                data: {
+                    collabUsersEmail: collabUsersEmail,
+                },
+            }));
+            res.json({
+                response: updatesUsers,
+                status: true,
+                message: "user email added as doc collaborator",
+            });
+        }
         res.json({
             message: "collaborating users reached maximum.Collaboration for this document is closed",
             status: false,
         });
     }
-    catch (_p) {
+    catch (_q) {
         res.json({ response: "server issue occured", status: false });
     }
 });
@@ -324,7 +348,7 @@ const getRoomCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 
             message: "no such room found",
         });
     }
-    catch (_q) {
+    catch (_r) {
         res.json({ response: "server issue occured", status: false });
     }
 });
