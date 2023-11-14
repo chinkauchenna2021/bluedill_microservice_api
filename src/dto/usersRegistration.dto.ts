@@ -35,12 +35,12 @@ export  interface IUsersChat {
 
 
 export interface ICollaboration{
-  id:string 
-  collabNumber:number 
-  docid : string 
-  docname: string 
-  roomId : string
-  collabUsersEmail : string[]
+  id?:string 
+  collabNumber?:number 
+  docid?: string 
+  docname?: string 
+  roomId: string
+  collabUsersEmail? : string[]
 }
 
 

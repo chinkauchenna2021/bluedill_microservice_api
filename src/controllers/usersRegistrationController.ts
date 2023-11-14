@@ -314,14 +314,14 @@ export const collaboratingUsers = async (
     });
 
     if (
-      getCollaboratingUsers?.collabNumber != undefined &&
-      getCollaboratingUsers?.collabNumber <= MAX_COLLABORATORS
+      getCollaboratingUsers !== undefined &&
+      getCollaboratingUsers?.collabNumber == 0
     ) {
       const collabData = await prisma.collaboratingUsers.create({
         data: {
-          collabNumber: collabUsersEmail.length,
-          docid: docid,
-          docname: docname,
+          collabNumber: collabUsersEmail?.length,
+          docid: docid as string,
+          docname: docname as string,
           roomId: roomId,
           collabUsersEmail: collabUsersEmail,
           user: {
@@ -336,6 +336,32 @@ export const collaboratingUsers = async (
         response: collabData,
         status: true,
         message: "collaboration created successfully ",
+      });
+    } else if (
+      getCollaboratingUsers?.collabNumber != undefined &&
+      getCollaboratingUsers?.collabNumber > 0 &&
+      getCollaboratingUsers?.collabNumber <= MAX_COLLABORATORS
+    ) {
+      const findUpdate = await prisma.collaboratingUsers.findFirst({
+        where: {
+          docid: docid,
+          roomId: roomId,
+        },
+      });
+
+      const updatesUsers = await prisma.collaboratingUsers?.update({
+        where: {
+          id: findUpdate?.id as string,
+        },
+        data: {
+          collabUsersEmail: collabUsersEmail,
+        },
+      });
+
+      res.json({
+        response: updatesUsers,
+        status: true,
+        message: "user email added as doc collaborator",
       });
     }
 
@@ -375,11 +401,3 @@ export const getRoomCollaborators = async (
     res.json({ response: "server issue occured", status: false });
   }
 };
-
-
-
-
-
-
-
-
