@@ -15,9 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRoomCollaborators = exports.collaboratingUsers = exports.getReceiversMessagesFromSender = exports.getUserMessagesToReceiver = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
-const ClassValidation_1 = require("../dto/ClassValidation");
-const class_transformer_1 = require("class-transformer");
-const class_validator_1 = require("class-validator");
 const homePage = (req, res) => {
     res.json({ message: "running successfully" });
 };
@@ -27,19 +24,18 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
     var _a, _b;
     console.log(req.body);
     try {
-        const salt = yield (0, useHook_1.generateSalt)();
-        const validatedData = (0, class_transformer_1.plainToClass)(ClassValidation_1.ClassValidation, req.body);
-        const validationResult = yield (0, class_validator_1.validate)(validatedData, {
-            validationError: { target: true },
-        });
-        if (validationResult.length !== 0) {
-            return res.status(400).json(validationResult);
-        }
-        const { email, firstname, lastname, password, company } = validatedData;
-        const userConfiguration = { email, firstname, lastname, password, company };
+        // const validatedData = plainToClass(ClassValidation, req.body);
+        // const validationResult = await validate(validatedData, {
+        //   validationError: { target: true },
+        // });
+        // if (validationResult.length !== 0) {
+        //   return res.status(400).json(validationResult);
+        // }
+        const { email, firstname, lastname, password, company } = req.body;
+        // const userConfiguration = { email, firstname, lastname, password, company };
         //    const userAuthToken  = await usersAuth(userConfiguration , salt);
-        const genSalt = yield (0, useHook_1.generateSalt)();
-        const hashpassword = yield (0, useHook_1.hashPass)(password, genSalt);
+        const salt = yield (0, useHook_1.generateSalt)();
+        const hashpassword = yield (0, useHook_1.hashPass)(password, salt);
         const isUserExist = yield ((_a = client_1.default.user) === null || _a === void 0 ? void 0 : _a.findFirst({
             where: { email: email },
         }));
@@ -57,7 +53,7 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 hashpassword: hashpassword,
             },
         }));
-        if (userReponse) {
+        if (userReponse.id != undefined) {
             res.json({
                 message: "registration was successful",
                 status: true,

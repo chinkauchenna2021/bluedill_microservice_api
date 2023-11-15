@@ -22,26 +22,27 @@ const MAX_COLLABORATORS = 5;
 export const userOnboarding = async (req: Request, res: Response) => {
   console.log(req.body);
   try {
-    const salt = await generateSalt();
+    
 
-    const validatedData = plainToClass(ClassValidation, req.body);
-    const validationResult = await validate(validatedData, {
-      validationError: { target: true },
-    });
+    // const validatedData = plainToClass(ClassValidation, req.body);
+    // const validationResult = await validate(validatedData, {
+    //   validationError: { target: true },
+    // });
 
-    if (validationResult.length !== 0) {
-      return res.status(400).json(validationResult);
-    }
+    // if (validationResult.length !== 0) {
+    //   return res.status(400).json(validationResult);
+    // }
 
-    const { email, firstname, lastname, password, company } = validatedData;
-    const userConfiguration = { email, firstname, lastname, password, company };
+    const { email, firstname, lastname, password, company } =<IRegistration>req.body;
+    // const userConfiguration = { email, firstname, lastname, password, company };
     //    const userAuthToken  = await usersAuth(userConfiguration , salt);
-    const genSalt = await generateSalt();
-    const hashpassword = await hashPass(password, genSalt);
+    const salt = await generateSalt();
+    const hashpassword = await hashPass(password, salt);
 
     const isUserExist = await prisma.user?.findFirst({
       where: { email: email },
     });
+
     if (isUserExist) {
       res.json({ message: "user already exist", status: false });
     }
@@ -58,7 +59,7 @@ export const userOnboarding = async (req: Request, res: Response) => {
       },
     });
 
-    if (userReponse) {
+    if (userReponse.id != undefined) {
       res.json({
         message: "registration was successful",
         status: true,
