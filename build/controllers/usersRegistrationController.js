@@ -22,18 +22,8 @@ exports.homePage = homePage;
 const MAX_COLLABORATORS = 5;
 const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    console.log(req.body);
     try {
-        // const validatedData = plainToClass(ClassValidation, req.body);
-        // const validationResult = await validate(validatedData, {
-        //   validationError: { target: true },
-        // });
-        // if (validationResult.length !== 0) {
-        //   return res.status(400).json(validationResult);
-        // }
-        const { email, firstname, lastname, password, company } = req.body;
-        // const userConfiguration = { email, firstname, lastname, password, company };
-        //    const userAuthToken  = await usersAuth(userConfiguration , salt);
+        const { email, firstname, lastname, password, company } = (req.body);
         const salt = yield (0, useHook_1.generateSalt)();
         const hashpassword = yield (0, useHook_1.hashPass)(password, salt);
         const isUserExist = yield ((_a = client_1.default.user) === null || _a === void 0 ? void 0 : _a.findFirst({
@@ -67,9 +57,9 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.userOnboarding = userOnboarding;
 const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email, password } = req.body;
     // const auth = req.get("Authorization");
     try {
+        const { email, password } = req.body;
         const usersLoginResponse = yield client_1.default.user.findFirst({
             where: {
                 email: email,
@@ -86,7 +76,9 @@ const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                 });
             }
         }
-        res.json({ response: "user not found ", status: false });
+        else {
+            res.json({ response: "user not found ", status: false });
+        }
     }
     catch (_d) {
         res.json({ response: "error occured", status: false });
@@ -95,8 +87,8 @@ const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function
 exports.userLogin = userLogin;
 const userRecoverPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _e;
-    const { email } = req.body;
     try {
+        const { email } = req.body;
         const usersRecoveryData = yield ((_e = client_1.default.user) === null || _e === void 0 ? void 0 : _e.findFirst({
             where: { email: email },
         }));
@@ -107,11 +99,13 @@ const userRecoverPassword = (req, res, next) => __awaiter(void 0, void 0, void 0
                 status: true,
             });
         }
-        res.json({
-            message: "user not found",
-            status: false,
-            user: usersRecoveryData,
-        });
+        else {
+            res.json({
+                message: "user not found",
+                status: false,
+                user: usersRecoveryData,
+            });
+        }
     }
     catch (_f) {
         res.json({ response: "error occured", status: false });
@@ -120,8 +114,8 @@ const userRecoverPassword = (req, res, next) => __awaiter(void 0, void 0, void 0
 exports.userRecoverPassword = userRecoverPassword;
 const searchUsersByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _g;
-    const { email } = req.body;
     try {
+        const { email } = req.body;
         const searchUsersData = yield ((_g = client_1.default.user) === null || _g === void 0 ? void 0 : _g.findFirst({
             where: { email: email },
         }));
@@ -132,11 +126,13 @@ const searchUsersByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 status: true,
             });
         }
-        res.json({
-            message: "user not found",
-            status: false,
-            user: searchUsersData,
-        });
+        else {
+            res.json({
+                message: "user not found",
+                status: false,
+                user: searchUsersData,
+            });
+        }
     }
     catch (_h) {
         res.json({ response: "error occured", status: false });
@@ -145,11 +141,11 @@ const searchUsersByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0,
 exports.searchUsersByEmail = searchUsersByEmail;
 const adminUploadTemplates = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _j;
-    const { docid, docname, templateType } = req.body;
-    const { id } = req.user;
-    const fileupload = req.file;
-    const filename = fileupload.filename;
     try {
+        const { docid, docname, templateType } = req.body;
+        const { id } = req.user;
+        const fileupload = req.file;
+        const filename = fileupload.filename;
         let updateTemplate = yield ((_j = client_1.default.document) === null || _j === void 0 ? void 0 : _j.create({
             data: {
                 docid: docid,
@@ -162,7 +158,9 @@ const adminUploadTemplates = (req, res, next) => __awaiter(void 0, void 0, void 
         if (updateTemplate) {
             res.json({ response: "template added successfully", status: true });
         }
-        res.json({ response: "something went wrong", status: false });
+        else {
+            res.json({ response: "something went wrong", status: false });
+        }
     }
     catch (err) {
         res.json({ response: "server error", status: false });
@@ -181,9 +179,9 @@ const getAllTemplates = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
 });
 exports.getAllTemplates = getAllTemplates;
 const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id, email } = req.user;
-    const { receiversemail, message } = req.body;
     try {
+        const { id, email } = req.user;
+        const { receiversemail, message } = req.body;
         const recieversData = yield client_1.default.user.findFirst({
             where: { email: receiversemail },
         });
@@ -210,7 +208,9 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
                 });
             }
         }
-        res.json({ response: "reciever does not exist ", status: false });
+        else {
+            res.json({ response: "reciever does not exist ", status: false });
+        }
     }
     catch (_l) {
         res.json({ response: "server issue occured", status: false });
@@ -233,10 +233,12 @@ const getUserMessagesToReceiver = (req, res, next) => __awaiter(void 0, void 0, 
             });
             res.json({ response: usersAllMessages, status: true });
         }
-        res.json({
-            response: `no such user with email ${email} exist `,
-            status: false,
-        });
+        else {
+            res.json({
+                response: `no such user with email ${email} exist `,
+                status: false,
+            });
+        }
     }
     catch (_m) {
         res.json({ response: "server issue occured", status: false });
@@ -244,8 +246,8 @@ const getUserMessagesToReceiver = (req, res, next) => __awaiter(void 0, void 0, 
 });
 exports.getUserMessagesToReceiver = getUserMessagesToReceiver;
 const getReceiversMessagesFromSender = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email } = req.body;
     try {
+        const { email } = req.body;
         const usersReceivedMessaages = yield client_1.default.chat.findMany({
             where: {
                 senderUserId: email,
@@ -260,9 +262,9 @@ const getReceiversMessagesFromSender = (req, res, next) => __awaiter(void 0, voi
 exports.getReceiversMessagesFromSender = getReceiversMessagesFromSender;
 const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _p;
-    const { id } = req.user;
-    const { docid, docname, roomId, collabUsersEmail } = req.body;
     try {
+        const { id } = req.user;
+        const { docid, docname, roomId, collabUsersEmail } = (req.body);
         const getCollaboratingUsers = yield client_1.default.collaboratingUsers.findFirst({
             where: {
                 docid: docid,
@@ -318,10 +320,12 @@ const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 message: "user email added as doc collaborator",
             });
         }
-        res.json({
-            message: "collaborating users reached maximum.Collaboration for this document is closed",
-            status: false,
-        });
+        else {
+            res.json({
+                message: "collaborating users reached maximum.Collaboration for this document is closed",
+                status: false,
+            });
+        }
     }
     catch (_q) {
         res.json({ response: "server issue occured", status: false });
@@ -329,8 +333,8 @@ const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0,
 });
 exports.collaboratingUsers = collaboratingUsers;
 const getRoomCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { roomId } = req.body;
     try {
+        const { roomId } = req.body;
         const roomdata = yield client_1.default.collaboratingUsers.findFirst({
             where: {
                 roomId: roomId,
@@ -339,11 +343,13 @@ const getRoomCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 
         if ((roomdata === null || roomdata === void 0 ? void 0 : roomdata.id) !== undefined) {
             res.json({ response: roomdata, status: true });
         }
-        res.json({
-            response: roomdata,
-            statu: false,
-            message: "no such room found",
-        });
+        else {
+            res.json({
+                response: roomdata,
+                statu: false,
+                message: "no such room found",
+            });
+        }
     }
     catch (_r) {
         res.json({ response: "server issue occured", status: false });

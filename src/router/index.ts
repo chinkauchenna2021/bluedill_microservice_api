@@ -1,9 +1,13 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
+import Cors from 'cors'
 import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getUserMessagesToReceiver, getReceiversMessagesFromSender, collaboratingUsers, getRoomCollaborators} from '../controllers';
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
 
 const router = express.Router()
+
+
+router.use(Cors())
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -19,19 +23,19 @@ const storage = multer.diskStorage({
 
 
 
-router.route('/').get(homePage)
-router.get("/getTemplates" , getAllTemplates)
-router.post("/login",userLogin)
-router.post("/useronboarding" , userOnboarding)
-router.post("/passwordrecovery",userRecoverPassword)
+router.get('/' , homePage);
+router.get("/getTemplates" , getAllTemplates);
+router.post("/login",userLogin);
+router.post("/useronboarding" , userOnboarding);
+router.post("/passwordrecovery",userRecoverPassword);
 
-router.use(VerifiedAuthToken);
-router.post('/searchuserbyemail' , searchUsersByEmail)
-router.post("/uploadsingletemplates",upload,adminUploadTemplates)
+// router.use(VerifiedAuthToken);
+router.post('/searchuserbyemail' , searchUsersByEmail);
+router.post("/uploadsingletemplates",upload,adminUploadTemplates);
 router.post("/chatusers" , usersChat);
 router.post("/getsendermessages",getUserMessagesToReceiver);
-router.post("/getreceiversmessages" , getReceiversMessagesFromSender)
-router.post('/createandaddcollaboration' , collaboratingUsers)
-router.post("/getroomdata",getRoomCollaborators)
+router.post("/getreceiversmessages" , getReceiversMessagesFromSender);
+router.post('/createandaddcollaboration' , collaboratingUsers);
+router.post("/getroomdata",getRoomCollaborators);
 
 export default router ; 

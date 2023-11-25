@@ -20,22 +20,10 @@ export const homePage = (req: Request, res: Response) => {
 const MAX_COLLABORATORS = 5;
 
 export const userOnboarding = async (req: Request, res: Response) => {
-  console.log(req.body);
   try {
-    
-
-    // const validatedData = plainToClass(ClassValidation, req.body);
-    // const validationResult = await validate(validatedData, {
-    //   validationError: { target: true },
-    // });
-
-    // if (validationResult.length !== 0) {
-    //   return res.status(400).json(validationResult);
-    // }
-
-    const { email, firstname, lastname, password, company } =<IRegistration>req.body;
-    // const userConfiguration = { email, firstname, lastname, password, company };
-    //    const userAuthToken  = await usersAuth(userConfiguration , salt);
+    const { email, firstname, lastname, password, company } = <IRegistration>(
+      req.body
+    );
     const salt = await generateSalt();
     const hashpassword = await hashPass(password, salt);
 
@@ -76,9 +64,9 @@ export const userLogin = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { email, password } = <ILogin>req.body;
   // const auth = req.get("Authorization");
   try {
+    const { email, password } = <ILogin>req.body;
     const usersLoginResponse = await prisma.user.findFirst({
       where: {
         email: email,
@@ -95,8 +83,9 @@ export const userLogin = async (
           response: usersLoginResponse,
         });
       }
+    } else {
+      res.json({ response: "user not found ", status: false });
     }
-    res.json({ response: "user not found ", status: false });
   } catch {
     res.json({ response: "error occured", status: false });
   }
@@ -107,8 +96,8 @@ export const userRecoverPassword = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { email } = <IRegistration>req.body;
   try {
+    const { email } = <IRegistration>req.body;
     const usersRecoveryData = await prisma.user?.findFirst({
       where: { email: email },
     });
@@ -118,12 +107,13 @@ export const userRecoverPassword = async (
         recoveryData: usersRecoveryData,
         status: true,
       });
+    } else {
+      res.json({
+        message: "user not found",
+        status: false,
+        user: usersRecoveryData,
+      });
     }
-    res.json({
-      message: "user not found",
-      status: false,
-      user: usersRecoveryData,
-    });
   } catch {
     res.json({ response: "error occured", status: false });
   }
@@ -134,8 +124,8 @@ export const searchUsersByEmail = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { email } = <IRegistration>req.body;
   try {
+    const { email } = <IRegistration>req.body;
     const searchUsersData = await prisma.user?.findFirst({
       where: { email: email },
     });
@@ -145,12 +135,13 @@ export const searchUsersByEmail = async (
         recoveryData: searchUsersData,
         status: true,
       });
+    } else {
+      res.json({
+        message: "user not found",
+        status: false,
+        user: searchUsersData,
+      });
     }
-    res.json({
-      message: "user not found",
-      status: false,
-      user: searchUsersData,
-    });
   } catch {
     res.json({ response: "error occured", status: false });
   }
@@ -161,12 +152,11 @@ export const adminUploadTemplates = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { docid, docname, templateType } = <IDocument>req.body;
-  const { id } = <IRegistration>req.user;
-  const fileupload = req.file as unknown as Express.Multer.File;
-  const filename = fileupload.filename as string;
-
   try {
+    const { docid, docname, templateType } = <IDocument>req.body;
+    const { id } = <IRegistration>req.user;
+    const fileupload = req.file as unknown as Express.Multer.File;
+    const filename = fileupload.filename as string;
     let updateTemplate = await prisma.document?.create({
       data: {
         docid: docid,
@@ -179,9 +169,9 @@ export const adminUploadTemplates = async (
 
     if (updateTemplate) {
       res.json({ response: "template added successfully", status: true });
+    } else {
+      res.json({ response: "something went wrong", status: false });
     }
-
-    res.json({ response: "something went wrong", status: false });
   } catch (err) {
     res.json({ response: "server error", status: false });
   }
@@ -205,11 +195,10 @@ export const usersChat = async (
   res: Response,
   nexr: NextFunction
 ) => {
-  const { id, email } = <IRegistration>req.user;
-
-  const { receiversemail, message } = <IUsersChat>req.body;
-
   try {
+    const { id, email } = <IRegistration>req.user;
+
+    const { receiversemail, message } = <IUsersChat>req.body;
     const recieversData = await prisma.user.findFirst({
       where: { email: receiversemail },
     });
@@ -237,9 +226,9 @@ export const usersChat = async (
           message: message,
         });
       }
+    } else {
+      res.json({ response: "reciever does not exist ", status: false });
     }
-
-    res.json({ response: "reciever does not exist ", status: false });
   } catch {
     res.json({ response: "server issue occured", status: false });
   }
@@ -265,12 +254,12 @@ export const getUserMessagesToReceiver = async (
         },
       });
       res.json({ response: usersAllMessages, status: true });
+    } else {
+      res.json({
+        response: `no such user with email ${email} exist `,
+        status: false,
+      });
     }
-
-    res.json({
-      response: `no such user with email ${email} exist `,
-      status: false,
-    });
   } catch {
     res.json({ response: "server issue occured", status: false });
   }
@@ -281,8 +270,8 @@ export const getReceiversMessagesFromSender = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { email } = req.body;
   try {
+    const { email } = req.body;
     const usersReceivedMessaages = await prisma.chat.findMany({
       where: {
         senderUserId: email,
@@ -299,11 +288,12 @@ export const collaboratingUsers = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id } = req.user;
-
-  const { docid, docname, roomId, collabUsersEmail } = <ICollaboration>req.body;
-
   try {
+    const { id } = req.user;
+
+    const { docid, docname, roomId, collabUsersEmail } = <ICollaboration>(
+      req.body
+    );
     const getCollaboratingUsers = await prisma.collaboratingUsers.findFirst({
       where: {
         docid: docid,
@@ -355,7 +345,7 @@ export const collaboratingUsers = async (
           id: findUpdate?.id as string,
         },
         data: {
-          collabNumber:collabUsersEmail?.length,
+          collabNumber: collabUsersEmail?.length,
           collabUsersEmail: collabUsersEmail,
         },
       });
@@ -365,13 +355,13 @@ export const collaboratingUsers = async (
         status: true,
         message: "user email added as doc collaborator",
       });
+    } else {
+      res.json({
+        message:
+          "collaborating users reached maximum.Collaboration for this document is closed",
+        status: false,
+      });
     }
-
-    res.json({
-      message:
-        "collaborating users reached maximum.Collaboration for this document is closed",
-      status: false,
-    });
   } catch {
     res.json({ response: "server issue occured", status: false });
   }
@@ -382,9 +372,8 @@ export const getRoomCollaborators = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { roomId } = req.body;
-
   try {
+    const { roomId } = req.body;
     const roomdata = await prisma.collaboratingUsers.findFirst({
       where: {
         roomId: roomId,
@@ -393,12 +382,13 @@ export const getRoomCollaborators = async (
 
     if (roomdata?.id !== undefined) {
       res.json({ response: roomdata, status: true });
+    } else {
+      res.json({
+        response: roomdata,
+        statu: false,
+        message: "no such room found",
+      });
     }
-    res.json({
-      response: roomdata,
-      statu: false,
-      message: "no such room found",
-    });
   } catch {
     res.json({ response: "server issue occured", status: false });
   }

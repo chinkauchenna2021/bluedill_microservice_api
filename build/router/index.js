@@ -4,10 +4,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
 const controllers_1 = require("../controllers");
 const multer_1 = __importDefault(require("multer"));
-const verifyAuth_1 = require("../middleware/verifyAuth");
 const router = express_1.default.Router();
+router.use((0, cors_1.default)());
 const storage = multer_1.default.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'images');
@@ -18,12 +19,12 @@ const storage = multer_1.default.diskStorage({
     }
 });
 const upload = (0, multer_1.default)({ storage: storage }).array("template");
-router.route('/').get(controllers_1.homePage);
+router.get('/', controllers_1.homePage);
 router.get("/getTemplates", controllers_1.getAllTemplates);
 router.post("/login", controllers_1.userLogin);
 router.post("/useronboarding", controllers_1.userOnboarding);
 router.post("/passwordrecovery", controllers_1.userRecoverPassword);
-router.use(verifyAuth_1.verfyAuthToken);
+// router.use(VerifiedAuthToken);
 router.post('/searchuserbyemail', controllers_1.searchUsersByEmail);
 router.post("/uploadsingletemplates", upload, controllers_1.adminUploadTemplates);
 router.post("/chatusers", controllers_1.usersChat);
