@@ -1,6 +1,6 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
 import Cors from 'cors'
-import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getUserMessagesToReceiver, getReceiversMessagesFromSender, collaboratingUsers, getRoomCollaborators} from '../controllers';
+import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, collaboratingUsers, getRoomCollaborators} from '../controllers';
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
 
@@ -33,8 +33,9 @@ router.post("/passwordrecovery",userRecoverPassword);
 router.post('/searchuserbyemail' , searchUsersByEmail);
 router.post("/uploadsingletemplates",upload,adminUploadTemplates);
 router.post("/chatusers" , usersChat);
-router.post("/getsendermessages",getUserMessagesToReceiver);
-router.post("/getreceiversmessages" , getReceiversMessagesFromSender);
+router.post("/usersmessages" , getChatMessage)
+// router.post("/getsendermessages",getUserMessagesToReceiver);
+// router.post("/getreceiversmessages" , getReceiversMessagesFromSender);
 router.post('/createandaddcollaboration' , collaboratingUsers);
 router.post("/getroomdata",getRoomCollaborators);
 

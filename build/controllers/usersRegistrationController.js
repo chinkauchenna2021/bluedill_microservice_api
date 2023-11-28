@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRoomCollaborators = exports.collaboratingUsers = exports.getReceiversMessagesFromSender = exports.getUserMessagesToReceiver = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.getChatMessage = exports.getRoomCollaborators = exports.collaboratingUsers = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
 const homePage = (req, res) => {
@@ -217,51 +217,54 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.usersChat = usersChat;
-const getUserMessagesToReceiver = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email } = req.body;
-    const { id } = req.user;
-    try {
-        const receiverData = yield client_1.default.user.findFirst({
-            where: { email: email },
-        });
-        if ((receiverData === null || receiverData === void 0 ? void 0 : receiverData.id) != null) {
-            const usersAllMessages = yield client_1.default.chat.findMany({
-                where: {
-                    senderUserId: id,
-                    receiverUserId: receiverData.id,
-                },
-            });
-            res.json({ response: usersAllMessages, status: true });
-        }
-        else {
-            res.json({
-                response: `no such user with email ${email} exist `,
-                status: false,
-            });
-        }
-    }
-    catch (_m) {
-        res.json({ response: "server issue occured", status: false });
-    }
-});
-exports.getUserMessagesToReceiver = getUserMessagesToReceiver;
-const getReceiversMessagesFromSender = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { email } = req.body;
-        const usersReceivedMessaages = yield client_1.default.chat.findMany({
-            where: {
-                senderUserId: email,
-            },
-        });
-        res.json({ response: usersReceivedMessaages, status: true });
-    }
-    catch (_o) {
-        res.json({ response: "server issue occured", status: false });
-    }
-});
-exports.getReceiversMessagesFromSender = getReceiversMessagesFromSender;
+// export const getUserMessagesToReceiver = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   const { email } = req.body;
+//   const { id } = req.user;
+//   try {
+//     const receiverData = await prisma.user.findFirst({
+//       where: { email: email },
+//     });
+//     if (receiverData?.id != null) {
+//       const usersAllMessages = await prisma.chat.findMany({
+//         where: {
+//           senderUserId: id,
+//           receiverUserId: receiverData.id,
+//         },
+//       });
+//       res.json({ response: usersAllMessages, status: true });
+//     } else {
+//       res.json({
+//         response: `no such user with email ${email} exist `,
+//         status: false,
+//       });
+//     }
+//   } catch {
+//     res.json({ response: "server issue occured", status: false });
+//   }
+// };
+// export const getReceiversMessagesFromSender = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     const { email } = req.body;
+//     const usersReceivedMessaages = await prisma.chat.findMany({
+//       where: {
+//         senderUserId: email,
+//       },
+//     });
+//     res.json({ response: usersReceivedMessaages, status: true });
+//   } catch {
+//     res.json({ response: "server issue occured", status: false });
+//   }
+// };
 const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _p;
+    var _m;
     try {
         const { id } = req.user;
         const { docid, docname, roomId, collabUsersEmail } = (req.body);
@@ -305,7 +308,7 @@ const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0,
                     roomId: roomId,
                 },
             });
-            const updatesUsers = yield ((_p = client_1.default.collaboratingUsers) === null || _p === void 0 ? void 0 : _p.update({
+            const updatesUsers = yield ((_m = client_1.default.collaboratingUsers) === null || _m === void 0 ? void 0 : _m.update({
                 where: {
                     id: findUpdate === null || findUpdate === void 0 ? void 0 : findUpdate.id,
                 },
@@ -327,7 +330,7 @@ const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0,
             });
         }
     }
-    catch (_q) {
+    catch (_o) {
         res.json({ response: "server issue occured", status: false });
     }
 });
@@ -351,8 +354,46 @@ const getRoomCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 
             });
         }
     }
-    catch (_r) {
+    catch (_p) {
         res.json({ response: "server issue occured", status: false });
     }
 });
 exports.getRoomCollaborators = getRoomCollaborators;
+const getChatMessage = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    const { id } = req.user;
+    try {
+        const receiverData = yield client_1.default.user.findFirst({
+            where: { email: email },
+        });
+        if ((receiverData === null || receiverData === void 0 ? void 0 : receiverData.id) != null) {
+            const sentMessages = yield client_1.default.chat.findMany({
+                where: {
+                    senderUserId: id,
+                    receiverUserId: receiverData.id,
+                },
+            });
+            const receiversMessages = yield client_1.default.chat.findMany({
+                where: {
+                    senderUserId: receiverData.id,
+                    receiverUserId: id,
+                },
+            });
+            res.json({
+                sentMessages: sentMessages,
+                recieveMessages: receiversMessages,
+                status: true,
+            });
+        }
+        else {
+            res.json({
+                response: `no such user with email ${email} exist `,
+                status: false,
+            });
+        }
+    }
+    catch (_q) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.getChatMessage = getChatMessage;

@@ -234,54 +234,54 @@ export const usersChat = async (
   }
 };
 
-export const getUserMessagesToReceiver = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { email } = req.body;
-  const { id } = req.user;
-  try {
-    const receiverData = await prisma.user.findFirst({
-      where: { email: email },
-    });
+// export const getUserMessagesToReceiver = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   const { email } = req.body;
+//   const { id } = req.user;
+//   try {
+//     const receiverData = await prisma.user.findFirst({
+//       where: { email: email },
+//     });
 
-    if (receiverData?.id != null) {
-      const usersAllMessages = await prisma.chat.findMany({
-        where: {
-          senderUserId: id,
-          receiverUserId: receiverData.id,
-        },
-      });
-      res.json({ response: usersAllMessages, status: true });
-    } else {
-      res.json({
-        response: `no such user with email ${email} exist `,
-        status: false,
-      });
-    }
-  } catch {
-    res.json({ response: "server issue occured", status: false });
-  }
-};
+//     if (receiverData?.id != null) {
+//       const usersAllMessages = await prisma.chat.findMany({
+//         where: {
+//           senderUserId: id,
+//           receiverUserId: receiverData.id,
+//         },
+//       });
+//       res.json({ response: usersAllMessages, status: true });
+//     } else {
+//       res.json({
+//         response: `no such user with email ${email} exist `,
+//         status: false,
+//       });
+//     }
+//   } catch {
+//     res.json({ response: "server issue occured", status: false });
+//   }
+// };
 
-export const getReceiversMessagesFromSender = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { email } = req.body;
-    const usersReceivedMessaages = await prisma.chat.findMany({
-      where: {
-        senderUserId: email,
-      },
-    });
-    res.json({ response: usersReceivedMessaages, status: true });
-  } catch {
-    res.json({ response: "server issue occured", status: false });
-  }
-};
+// export const getReceiversMessagesFromSender = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     const { email } = req.body;
+//     const usersReceivedMessaages = await prisma.chat.findMany({
+//       where: {
+//         senderUserId: email,
+//       },
+//     });
+//     res.json({ response: usersReceivedMessaages, status: true });
+//   } catch {
+//     res.json({ response: "server issue occured", status: false });
+//   }
+// };
 
 export const collaboratingUsers = async (
   req: Request,
@@ -387,6 +387,52 @@ export const getRoomCollaborators = async (
         response: roomdata,
         statu: false,
         message: "no such room found",
+      });
+    }
+  } catch {
+    res.json({ response: "server issue occured", status: false });
+  }
+};
+
+
+
+
+export const getChatMessage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email } = req.body;
+  const { id } = req.user;
+  try {
+    const receiverData = await prisma.user.findFirst({
+      where: { email: email },
+    });
+
+    if (receiverData?.id != null) {
+      const sentMessages = await prisma.chat.findMany({
+        where: {
+          senderUserId: id,
+          receiverUserId: receiverData.id,
+        },
+      });
+
+      const receiversMessages = await prisma.chat.findMany({
+        where: {
+          senderUserId: receiverData.id,
+          receiverUserId: id,
+        },
+      });
+
+      res.json({
+        sentMessages: sentMessages,
+        recieveMessages: receiversMessages,
+        status: true,
+      });
+    } else {
+      res.json({
+        response: `no such user with email ${email} exist `,
+        status: false,
       });
     }
   } catch {
