@@ -1,6 +1,6 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
 import Cors from 'cors'
-import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, collaboratingUsers, getRoomCollaborators} from '../controllers';
+import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, collaboratingUsers, getRoomCollaborators , userLoginByEmail} from '../controllers';
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
 
@@ -26,6 +26,7 @@ const storage = multer.diskStorage({
 router.get('/' , homePage);
 router.get("/getTemplates" , getAllTemplates);
 router.post("/login",userLogin);
+router.post("/loginbymail",userLoginByEmail)
 router.post("/useronboarding" , userOnboarding);
 router.post("/passwordrecovery",userRecoverPassword);
 
@@ -38,5 +39,6 @@ router.post("/usersmessages" , getChatMessage)
 // router.post("/getreceiversmessages" , getReceiversMessagesFromSender);
 router.post('/createandaddcollaboration' , collaboratingUsers);
 router.post("/getroomdata",getRoomCollaborators);
+
 
 export default router ; 

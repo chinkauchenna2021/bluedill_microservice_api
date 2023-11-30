@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getChatMessage = exports.getRoomCollaborators = exports.collaboratingUsers = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.userLoginByEmail = exports.getChatMessage = exports.getRoomCollaborators = exports.collaboratingUsers = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
 const homePage = (req, res) => {
@@ -397,3 +397,30 @@ const getChatMessage = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getChatMessage = getChatMessage;
+const userLoginByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email } = req.body;
+        const usersLoginResponseByEmail = yield client_1.default.user.findFirst({
+            where: {
+                email: email,
+            },
+        });
+        if (usersLoginResponseByEmail) {
+            const tokenAuth = yield (0, useHook_1.usersAuth)(usersLoginResponseByEmail);
+            if (tokenAuth) {
+                res.json({
+                    authToken: tokenAuth,
+                    status: true,
+                    response: usersLoginResponseByEmail,
+                });
+            }
+        }
+        else {
+            res.json({ response: "user not found ", status: false });
+        }
+    }
+    catch (_r) {
+        res.json({ response: "error occured", status: false });
+    }
+});
+exports.userLoginByEmail = userLoginByEmail;

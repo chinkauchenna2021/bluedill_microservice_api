@@ -22,6 +22,7 @@ const upload = (0, multer_1.default)({ storage: storage }).array("template");
 router.get('/', controllers_1.homePage);
 router.get("/getTemplates", controllers_1.getAllTemplates);
 router.post("/login", controllers_1.userLogin);
+router.post("/loginbymail", controllers_1.userLoginByEmail);
 router.post("/useronboarding", controllers_1.userOnboarding);
 router.post("/passwordrecovery", controllers_1.userRecoverPassword);
 // router.use(VerifiedAuthToken);

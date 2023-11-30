@@ -439,3 +439,33 @@ export const getChatMessage = async (
     res.json({ response: "server issue occured", status: false });
   }
 };
+
+export const userLoginByEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email} = req.body;
+    const usersLoginResponseByEmail = await prisma.user.findFirst({
+      where: {
+        email: email,
+      },
+    });
+
+    if (usersLoginResponseByEmail) {
+      const tokenAuth = await usersAuth(usersLoginResponseByEmail as IRegistration);
+      if (tokenAuth) {
+        res.json({
+          authToken: tokenAuth,
+          status: true,
+          response: usersLoginResponseByEmail,
+        });
+      }
+    } else {
+      res.json({ response: "user not found ", status: false });
+    }
+  } catch {
+    res.json({ response: "error occured", status: false });
+  }
+};
