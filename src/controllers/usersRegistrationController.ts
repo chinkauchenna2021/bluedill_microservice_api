@@ -196,19 +196,24 @@ export const usersChat = async (
   nexr: NextFunction
 ) => {
   try {
-    const { id, email } = <IRegistration>req.user;
+    // const { id, email } = <IRegistration>req.user;
 
-    const { receiversemail, message } = <IUsersChat>req.body;
+    const { sendersEmail , receiversemail, message } = <IUsersChat>req.body;
     const recieversData = await prisma.user.findFirst({
       where: { email: receiversemail },
     });
 
+    const senderData = await prisma.user.findFirst({
+      where: { email: sendersEmail },
+    });
+
+
     if (recieversData?.id != null) {
       const chatusers = await prisma.chat.create({
         data: {
-          userEmail: email,
+          userEmail: sendersEmail,
           userMessage: message,
-          senderUserId: id as string,
+          senderUserId: senderData.id as string,
           receiverUserId: recieversData?.id as string,
           isReceivedStatus: true,
           user: {
@@ -402,25 +407,29 @@ export const getChatMessage = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { senderEmail , recieverEmail } = req.body;
+  const { senderEmail ,  recieverEmail } = req.body;
   // const { id } = req.user;
   try {
     const receiverData = await prisma.user.findFirst({
+      where: { email: recieverEmail },
+    });
+
+    const senderData = await prisma.user.findFirst({
       where: { email: senderEmail },
     });
 
-    if (receiverData?.id != null) {
+    if ((receiverData?.id != null) && (sender?.id != null)) {
       const sentMessages = await prisma.chat.findMany({
-        where: {
-          senderEmail: senderEmail,
-          receiverUserId: receiverData.id,
+        where: { 
+          userEmail:senderEmail,
+          receiverUserId: receiverData?.id,
         },
       });
 
       const receiversMessages = await prisma.chat.findMany({
         where: {
-          senderUserId: receiverData.id,
-          recieverEmail: recieverEmail,
+          userEmail: recieverEmail,
+          receiverUserId: senderData?.id
         },
       });
 
@@ -431,7 +440,7 @@ export const getChatMessage = async (
       });
     } else {
       res.json({
-        response: `no such user with email ${email} exist `,
+        response: `no such user with email ${recieverEmail} exist `,
         status: false,
       });
     }
