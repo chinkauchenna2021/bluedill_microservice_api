@@ -42,6 +42,8 @@ model Document{
     doclink  String
     userUpdateDoc String 
     templateType String
+    isEncrypted Boolean @default(false)
+    securityCode String?  
     docformat  String @default("lexical")
     createdAt  DateTime   @default(now())
     updatedAt  DateTime   @updatedAt

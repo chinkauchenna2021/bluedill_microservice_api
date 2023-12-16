@@ -402,17 +402,17 @@ export const getChatMessage = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { email } = req.body;
-  const { id } = req.user;
+  const { senderEmail , recieverEmail } = req.body;
+  // const { id } = req.user;
   try {
     const receiverData = await prisma.user.findFirst({
-      where: { email: email },
+      where: { email: senderEmail },
     });
 
     if (receiverData?.id != null) {
       const sentMessages = await prisma.chat.findMany({
         where: {
-          senderUserId: id,
+          senderEmail: senderEmail,
           receiverUserId: receiverData.id,
         },
       });
@@ -420,7 +420,7 @@ export const getChatMessage = async (
       const receiversMessages = await prisma.chat.findMany({
         where: {
           senderUserId: receiverData.id,
-          receiverUserId: id,
+          recieverEmail: recieverEmail,
         },
       });
 
