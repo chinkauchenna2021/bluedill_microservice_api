@@ -407,28 +407,28 @@ export const getChatMessage = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { senderEmail ,  recieverEmail } = req.body;
+  const { sendersEmail ,  recieversEmail } = req.body;
   // const { id } = req.user;
   try {
     const receiverData = await prisma.user.findFirst({
-      where: { email: recieverEmail },
+      where: { email: recieversEmail },
     });
 
     const senderData = await prisma.user.findFirst({
-      where: { email: senderEmail },
+      where: { email: sendersEmail },
     });
 
-    if ((receiverData?.id != null) && (sender?.id != null)) {
+    if ((receiverData?.id != null) && (senderData?.id != null)) {
       const sentMessages = await prisma.chat.findMany({
         where: { 
-          userEmail:senderEmail,
+          userEmail:sendersEmail,
           receiverUserId: receiverData?.id,
         },
       });
 
       const receiversMessages = await prisma.chat.findMany({
         where: {
-          userEmail: recieverEmail,
+          userEmail: recieversEmail,
           receiverUserId: senderData?.id
         },
       });
@@ -440,7 +440,7 @@ export const getChatMessage = async (
       });
     } else {
       res.json({
-        response: `no such user with email ${recieverEmail} exist `,
+        response: `no such user with email ${recieversEmail} exist `,
         status: false,
       });
     }
