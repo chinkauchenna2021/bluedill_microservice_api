@@ -5,6 +5,7 @@ import {
   IDocument,
   IUsersChat,
   ICollaboration,
+  IDocUpdate,
 } from "../dto/usersRegistration.dto";
 
 import { generateSalt, getChatNotifier, hashPass, usersAuth } from "../utilities/useHook";
@@ -555,3 +556,75 @@ export const updateChatNotification = async (
     res.json({ response: "server issue occured", status: false });
   }
 };
+
+
+
+
+
+
+export const updateDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+  )=>{
+    try{
+    const {docid , docname , doclink , userUpdateDoc , templateType , isEncrypted , securityCode , docformat} = req.body;
+  
+   const docData =  await prisma.document.update({
+    where:{
+          docid:docid
+       },
+    data:{
+         docname:docname,
+         doclink: doclink,
+         userUpdateDoc:userUpdateDoc,
+         templateType:templateType,
+         isEncrypted:isEncrypted,
+         securityCode:securityCode,
+         docformat:docformat
+      }})
+
+      if(docData.docid != null){
+        res.json({
+          response: docData,
+          message: `Document with id ${docData.id} was updated successfully `,
+        });
+
+      }else{
+        res.json({
+          response: docData,
+          message: `Document update failed `,
+        });
+
+      }
+
+    }catch(err){
+    res.json({ response: "server issue occured", status: false });
+  }
+}
+
+export const getAllDocument = async(
+  req: Request,
+  res: Response,
+  next: NextFunction
+  )=>{
+    try{
+         const allDocs = await prisma.document.findMany();
+       if(allDocs.length  != 0){
+          res.json({
+            response: allDocs,
+            message: `All templates collected successfully `,
+          }); 
+
+       }else{
+        res.json({
+          response: allDocs,
+          message: `Template Collection failed `,
+        });
+
+       }
+    }catch(err){
+      res.json({ response: "server issue occured", status: false });  
+    }
+
+} 

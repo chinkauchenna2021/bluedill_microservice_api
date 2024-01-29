@@ -66,3 +66,19 @@ export interface IChatNotifier {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export type IDocUpdate = {
+  id: string;
+  docid: string;
+  docname: string;
+  doclink: string;
+  userUpdateDoc: string;
+  templateType: string;
+  isEncrypted: boolean;
+  securityCode: string | null;
+  docformat: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+
