@@ -1,8 +1,10 @@
 import { Request , Response , NextFunction } from 'express';
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { IRegistration } from '../dto/usersRegistration.dto';
+import { IRegistration , IChatNotifier } from '../dto/usersRegistration.dto';
 import { AUTH_SECRET_KEY } from '../config';
+
+
 
 
 export const generateSalt = async()=>{
@@ -27,6 +29,14 @@ export const verifyUserAuth = async (req:Request)=>{
             return true ;
        }
 }
+
+
+export const getChatNotifier = async (usersChatData: IChatNotifier[]) =>{
+    return usersChatData.filter((usersChat:IChatNotifier)=>usersChat?.isReceivedStatus == false)
+}
+
+
+
 
 
 

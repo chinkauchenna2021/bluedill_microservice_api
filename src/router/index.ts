@@ -1,6 +1,6 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
 import Cors from 'cors'
-import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, collaboratingUsers, getRoomCollaborators , userLoginByEmail} from '../controllers';
+import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, collaboratingUsers, getRoomCollaborators , userLoginByEmail, getChatNotification, updateChatNotification} from '../controllers';
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
 
@@ -38,7 +38,8 @@ router.post("/usersmessages" , getChatMessage)
 // router.post("/getsendermessages",getUserMessagesToReceiver);
 // router.post("/getreceiversmessages" , getReceiversMessagesFromSender);
 router.post('/createandaddcollaboration' , collaboratingUsers);
-router.post("/getroomdata",getRoomCollaborators);
-
+router.post("/getroomdata",getRoomCollaborators)
+router.post("/getNotification" , getChatNotification) 
+router.post("updateNotification" , updateChatNotification);
 
 export default router ; 

@@ -17,7 +17,8 @@ export interface ILogin{
 
 
 export  interface IUsersChat {
-     id:string 
+     id:string ,
+     sendersEmail:string,
      receiversemail:string
      message:string;
      isReceivedStatus:boolean
@@ -50,4 +51,18 @@ export interface IDocument{
  docid:string ,
  docname:string,
  templateType:string 
+}
+
+
+
+export interface IChatNotifier {
+    id: string;
+    userEmail: string;
+    userMessage: string;
+    senderUserId: string;
+    receiverUserId: string;
+    isReceivedStatus: boolean;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
 }

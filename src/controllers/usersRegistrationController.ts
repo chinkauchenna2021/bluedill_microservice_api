@@ -6,7 +6,8 @@ import {
   IUsersChat,
   ICollaboration,
 } from "../dto/usersRegistration.dto";
-import { generateSalt, hashPass, usersAuth } from "../utilities/useHook";
+
+import { generateSalt, getChatNotifier, hashPass, usersAuth } from "../utilities/useHook";
 import prisma from "../model/prismaClient/client";
 import { ClassValidation } from "../dto/ClassValidation";
 import { plainToClass } from "class-transformer";
@@ -107,6 +108,9 @@ export const userRecoverPassword = async (
         recoveryData: usersRecoveryData,
         status: true,
       });
+
+      
+
     } else {
       res.json({
         message: "user not found",
@@ -213,7 +217,7 @@ export const usersChat = async (
         data: {
           userEmail: sendersEmail,
           userMessage: message,
-          senderUserId: senderData.id as string,
+          senderUserId: senderData?.id as string,
           receiverUserId: recieversData?.id as string,
           isReceivedStatus: true,
           user: {
@@ -476,5 +480,78 @@ export const userLoginByEmail = async (
     }
   } catch {
     res.json({ response: "error occured", status: false });
+  }
+};
+
+
+
+
+
+export const getChatNotification = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const {receiverUserId } = req.body;
+  // const { id } = req.user;
+  try {
+    const receiverData = await prisma.chat.findMany({
+      where: { receiverUserId: receiverUserId , isReceivedStatus:false},
+    });
+
+    if ((receiverData.length != 0)) {
+      let userNotify = await getChatNotifier(receiverData);
+      res.json({
+        response: userNotify,
+        message: 'users notification',
+      });
+           
+    } else {
+      res.json({
+        response: [],
+        message: 'No Notification for User',
+      });
+    }
+  } catch {
+    res.json({ response: "server issue occured", status: false });
+  }
+};
+
+
+
+
+
+export const updateChatNotification = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const {chatId} = req.body;
+  // const { id } = req.user;
+  try {
+    const receiverData = await prisma.chat.update({
+      where:{
+           id:chatId
+      },
+     data:{
+       isReceivedStatus:true
+     }
+    });
+
+    if ((receiverData?.id != null)) {
+
+      res.json({
+        response: receiverData,
+        message: `users notification with id ${receiverData.id} was updated successfully `,
+      });
+           
+    } else {
+      res.json({
+        response: false,
+        message: `users notification with id ${chatId} failed`,
+      });
+    }
+  } catch {
+    res.json({ response: "server issue occured", status: false });
   }
 };
