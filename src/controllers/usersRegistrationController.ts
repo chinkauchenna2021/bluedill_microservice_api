@@ -324,7 +324,7 @@ export const collaboratingUsers = async (
           docid: docid as string,
           docname: docname as string,
           roomId: roomId,
-          collabUsersEmail: collabUsersEmail,
+          collabUsersEmail:  JSON.stringify(collabUsersEmail),
           user: {
             connect: {
               id: id,
@@ -356,7 +356,7 @@ export const collaboratingUsers = async (
         },
         data: {
           collabNumber: collabUsersEmail?.length,
-          collabUsersEmail: collabUsersEmail,
+          collabUsersEmail:  JSON.stringify(collabUsersEmail),
         },
       });
 
