@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, response } from "express";
 import {
   IRegistration,
   ILogin,
@@ -8,12 +8,18 @@ import {
   IDocUpdate,
 } from "../dto/usersRegistration.dto";
 
-import { generateSalt, getChatNotifier, hashPass, usersAuth } from "../utilities/useHook";
+import {
+  generateSalt,
+  getChatNotifier,
+  hashPass,
+  usersAuth,
+} from "../utilities/useHook";
 import prisma from "../model/prismaClient/client";
 import { ClassValidation } from "../dto/ClassValidation";
 import { plainToClass } from "class-transformer";
 import { validate } from "class-validator";
 import { Multer } from "multer";
+import { connect } from "http2";
 
 export const homePage = (req: Request, res: Response) => {
   res.json({ message: "running successfully" });
@@ -109,9 +115,6 @@ export const userRecoverPassword = async (
         recoveryData: usersRecoveryData,
         status: true,
       });
-
-      
-
     } else {
       res.json({
         message: "user not found",
@@ -203,7 +206,7 @@ export const usersChat = async (
   try {
     // const { id, email } = <IRegistration>req.user;
 
-    const { sendersEmail , receiversemail, message } = <IUsersChat>req.body;
+    const { sendersEmail, receiversemail, message } = <IUsersChat>req.body;
     const recieversData = await prisma.user.findFirst({
       where: { email: receiversemail },
     });
@@ -211,7 +214,6 @@ export const usersChat = async (
     const senderData = await prisma.user.findFirst({
       where: { email: sendersEmail },
     });
-
 
     if (recieversData?.id != null) {
       const chatusers = await prisma.chat.create({
@@ -244,175 +246,137 @@ export const usersChat = async (
   }
 };
 
-// export const getUserMessagesToReceiver = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   const { email } = req.body;
-//   const { id } = req.user;
-//   try {
-//     const receiverData = await prisma.user.findFirst({
-//       where: { email: email },
-//     });
+export const createCollaboration = async (req: Request, res: Response) => {
+  const { docId, docName, roomId } = req.body;
 
-//     if (receiverData?.id != null) {
-//       const usersAllMessages = await prisma.chat.findMany({
-//         where: {
-//           senderUserId: id,
-//           receiverUserId: receiverData.id,
-//         },
-//       });
-//       res.json({ response: usersAllMessages, status: true });
-//     } else {
-//       res.json({
-//         response: `no such user with email ${email} exist `,
-//         status: false,
-//       });
-//     }
-//   } catch {
-//     res.json({ response: "server issue occured", status: false });
-//   }
-// };
+  console.log(req.body);
+  try {
+    const collab = await prisma.collaborateDocs.findFirst({
+      where: {
+        roomId: roomId,
+        docid: docId,
+      },
+    });
 
-// export const getReceiversMessagesFromSender = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   try {
-//     const { email } = req.body;
-//     const usersReceivedMessaages = await prisma.chat.findMany({
-//       where: {
-//         senderUserId: email,
-//       },
-//     });
-//     res.json({ response: usersReceivedMessaages, status: true });
-//   } catch {
-//     res.json({ response: "server issue occured", status: false });
-//   }
-// };
+    if (collab == null) {
+      const collabCreated = await prisma.collaborateDocs.create({
+        data: {
+          docid: docId,
+          docname: docName,
+          roomId: roomId,
+          requestingSignature: false,
+        },
+      });
+      res.json({ response: "Document Collaboration created", status: true , message:collabCreated });
+    } else {
+      res.json({
+        response:
+          "Document Collaboration creation failed. Collaboration already exist",
+        status: false,
+      });
+    }
+  } catch (err) {
+    res.json({ response: "server Error occured", status: false, error: err });
+  }
+};
 
-export const collaboratingUsers = async (
+export const addCollaborators = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { id } = req.user;
+    // add collaborators
 
-    const { docid, docname, roomId, collabUsersEmail } = <ICollaboration>(
-      req.body
-    );
-    const getCollaboratingUsers = await prisma.collaboratingUsers.findFirst({
-      where: {
-        docid: docid,
-        roomId: roomId,
-      },
+    const { roomId, collabUsersEmail} = req.body;
+
+    const isCollaboratorsAvailable = await prisma.collaborateDocs.findFirst({
+      where: { roomId: roomId },
       select: {
-        collabNumber: true,
+        collaborator: {
+          select: {
+            userId: true,
+          },
+        },
       },
     });
 
     if (
-      getCollaboratingUsers !== undefined &&
-      getCollaboratingUsers?.collabNumber == 0
+      isCollaboratorsAvailable &&
+      isCollaboratorsAvailable.collaborator.length <= 0
     ) {
-      const collabData = await prisma.collaboratingUsers.create({
-        data: {
-          collabNumber: collabUsersEmail?.length,
-          docid: docid as string,
-          docname: docname as string,
+      const mainDoc = await prisma.collaborateDocs.findFirst({
+        where: {
           roomId: roomId,
-          collabUsersEmail:  JSON.stringify(collabUsersEmail),
-          user: {
-            connect: {
-              id: id,
-            },
+        },
+      });
+
+      if(mainDoc){
+        const joinCollaborators = await prisma.collaborator.create({
+          data: {
+            userId: mainDoc?.id,
+            collaboratorEmail: collabUsersEmail,
+            isSigned: false,
           },
-        },
-      });
+        });
+        res.json({
+          collaboratingDocsDetails: mainDoc,
+          collaboratordetails: joinCollaborators,
+          status: true,
+          message: "User is added to Doc Collaboration",
+        });
+      }else{
+        res.json({
+          collaboratingDocsDetails: mainDoc,
+          message: "No such Document to collaborate.",
+        });
 
-      res.json({
-        response: collabData,
-        status: true,
-        message: "collaboration created successfully ",
-      });
-    } else if (
-      getCollaboratingUsers?.collabNumber != undefined &&
-      getCollaboratingUsers?.collabNumber > 0 &&
-      getCollaboratingUsers?.collabNumber <= MAX_COLLABORATORS
-    ) {
-      const findUpdate = await prisma.collaboratingUsers.findFirst({
-        where: {
-          docid: docid,
-          roomId: roomId,
-        },
-      });
+      }
 
-      const updatesUsers = await prisma.collaboratingUsers?.update({
-        where: {
-          id: findUpdate?.id as string,
-        },
-        data: {
-          collabNumber: collabUsersEmail?.length,
-          collabUsersEmail:  JSON.stringify(collabUsersEmail),
-        },
-      });
-
-      res.json({
-        response: updatesUsers,
-        status: true,
-        message: "user email added as doc collaborator",
-      });
     } else {
-      res.json({
-        message:
-          "collaborating users reached maximum.Collaboration for this document is closed",
-        status: false,
-      });
+      res.json({ response: "User is already a collaborator.", status: false });
     }
-  } catch {
-    res.json({ response: "server issue occured", status: false });
+  } catch (err) {
+    res.json({ response: "server Error occured", status: false, error: err });
   }
 };
 
-export const getRoomCollaborators = async (
+export const getCollaboratorDocs = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { roomId } = req.body;
-    const roomdata = await prisma.collaboratingUsers.findFirst({
+
+    const collabDocs = await prisma.collaborateDocs.findMany({
       where: {
         roomId: roomId,
       },
+      include:{
+        collaborator:true
+      }
     });
-
-    if (roomdata?.id !== undefined) {
-      res.json({ response: roomdata, status: true });
-    } else {
+    if (!(collabDocs.length <= 0)) {
       res.json({
-        response: roomdata,
-        statu: false,
-        message: "no such room found",
+        response: collabDocs,
+        status: true,
+        message: "Collaboration Document found",
       });
+    } else {
+      res.json({ message: "Collaboration Document Not found", status: false });
     }
-  } catch {
-    res.json({ response: "server issue occured", status: false });
+  } catch (err) {
+    res.json({ response: "server Error occured", status: false, error: err });
   }
 };
-
-
-
 
 export const getChatMessage = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const { sendersEmail ,  recieversEmail } = req.body;
+  const { sendersEmail, recieversEmail } = req.body;
   // const { id } = req.user;
   try {
     const receiverData = await prisma.user.findFirst({
@@ -423,10 +387,10 @@ export const getChatMessage = async (
       where: { email: sendersEmail },
     });
 
-    if ((receiverData?.id != null) && (senderData?.id != null)) {
+    if (receiverData?.id != null && senderData?.id != null) {
       const sentMessages = await prisma.chat.findMany({
-        where: { 
-          userEmail:sendersEmail,
+        where: {
+          userEmail: sendersEmail,
           receiverUserId: receiverData?.id,
         },
       });
@@ -434,7 +398,7 @@ export const getChatMessage = async (
       const receiversMessages = await prisma.chat.findMany({
         where: {
           userEmail: recieversEmail,
-          receiverUserId: senderData?.id
+          receiverUserId: senderData?.id,
         },
       });
 
@@ -460,7 +424,7 @@ export const userLoginByEmail = async (
   next: NextFunction
 ) => {
   try {
-    const { email} = req.body;
+    const { email } = req.body;
     const usersLoginResponseByEmail = await prisma.user.findFirst({
       where: {
         email: email,
@@ -468,7 +432,9 @@ export const userLoginByEmail = async (
     });
 
     if (usersLoginResponseByEmail) {
-      const tokenAuth = await usersAuth(usersLoginResponseByEmail as IRegistration);
+      const tokenAuth = await usersAuth(
+        usersLoginResponseByEmail as IRegistration
+      );
       if (tokenAuth) {
         res.json({
           authToken: tokenAuth,
@@ -484,33 +450,28 @@ export const userLoginByEmail = async (
   }
 };
 
-
-
-
-
 export const getChatNotification = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const {receiverUserId } = req.body;
+  const { receiverUserId } = req.body;
   // const { id } = req.user;
   try {
     const receiverData = await prisma.chat.findMany({
-      where: { receiverUserId: receiverUserId , isReceivedStatus:false},
+      where: { receiverUserId: receiverUserId, isReceivedStatus: false },
     });
 
-    if ((receiverData.length != 0)) {
+    if (receiverData.length != 0) {
       let userNotify = await getChatNotifier(receiverData);
       res.json({
         response: userNotify,
-        message: 'users notification',
+        message: "users notification",
       });
-           
     } else {
       res.json({
         response: [],
-        message: 'No Notification for User',
+        message: "No Notification for User",
       });
     }
   } catch {
@@ -518,34 +479,28 @@ export const getChatNotification = async (
   }
 };
 
-
-
-
-
 export const updateChatNotification = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const {chatId} = req.body;
+  const { chatId } = req.body;
   // const { id } = req.user;
   try {
     const receiverData = await prisma.chat.update({
-      where:{
-           id:chatId
+      where: {
+        id: chatId,
       },
-     data:{
-       isReceivedStatus:true
-     }
+      data: {
+        isReceivedStatus: true,
+      },
     });
 
-    if ((receiverData?.id != null)) {
-
+    if (receiverData?.id != null) {
       res.json({
         response: receiverData,
         message: `users notification with id ${receiverData.id} was updated successfully `,
       });
-           
     } else {
       res.json({
         response: false,
@@ -557,74 +512,73 @@ export const updateChatNotification = async (
   }
 };
 
-
-
-
-
-
 export const updateDocument = async (
   req: Request,
   res: Response,
   next: NextFunction
-  )=>{
-    try{
-    const {docid , docname , doclink , userUpdateDoc , templateType , isEncrypted , securityCode , docformat} = req.body;
-  
-   const docData =  await prisma.document.update({
-    where:{
-          docid:docid
-       },
-    data:{
-         docname:docname,
-         doclink: doclink,
-         userUpdateDoc:userUpdateDoc,
-         templateType:templateType,
-         isEncrypted:isEncrypted,
-         securityCode:securityCode,
-         docformat:docformat
-      }})
+) => {
+  try {
+    const {
+      docid,
+      docname,
+      doclink,
+      userUpdateDoc,
+      templateType,
+      isEncrypted,
+      securityCode,
+      docformat,
+    } = req.body;
 
-      if(docData.docid != null){
-        res.json({
-          response: docData,
-          message: `Document with id ${docData.id} was updated successfully `,
-        });
+    const docData = await prisma.document.update({
+      where: {
+        docid: docid,
+      },
+      data: {
+        docname: docname,
+        doclink: doclink,
+        userUpdateDoc: userUpdateDoc,
+        templateType: templateType,
+        isEncrypted: isEncrypted,
+        securityCode: securityCode,
+        docformat: docformat,
+      },
+    });
 
-      }else{
-        res.json({
-          response: docData,
-          message: `Document update failed `,
-        });
-
-      }
-
-    }catch(err){
+    if (docData.docid != null) {
+      res.json({
+        response: docData,
+        message: `Document with id ${docData.id} was updated successfully `,
+      });
+    } else {
+      res.json({
+        response: docData,
+        message: `Document update failed `,
+      });
+    }
+  } catch (err) {
     res.json({ response: "server issue occured", status: false });
   }
-}
+};
 
-export const getAllDocument = async(
+export const getAllDocument = async (
   req: Request,
   res: Response,
   next: NextFunction
-  )=>{
-    try{
-         const allDocs = await prisma.document.findMany();
-       if(allDocs.length  != 0){
-          res.json({
-            response: allDocs,
-            message: `All templates collected successfully `,
-          }); 
-
-       }else{
-        res.json({
-          response: allDocs,
-          message: `Template Collection failed `,
-        });
-
-       }
-    }catch(err){
-      res.json({ response: "server issue occured", status: false });  
+) => {
+  try {
+    const allDocs = await prisma.document.findMany();
+    if (allDocs.length != 0) {
+      res.json({
+        response: allDocs,
+        message: `All templates collected successfully `,
+      });
+    } else {
+      res.json({
+        response: allDocs,
+        message: `Template Collection failed `,
+      });
     }
-
-} 
+  } catch (err) {
+    res.json({ response: "server issue occured", status: false });
+  }
+};

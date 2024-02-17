@@ -1,6 +1,6 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
 import Cors from 'cors'
-import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, collaboratingUsers, getRoomCollaborators , userLoginByEmail, getChatNotification, updateChatNotification, getAllDocument, updateDocument} from '../controllers';
+import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, createCollaboration, addCollaborators , getCollaboratorDocs , userLoginByEmail, getChatNotification, updateChatNotification, getAllDocument, updateDocument} from '../controllers';
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
 
@@ -37,9 +37,10 @@ router.post("/chatusers" , usersChat);
 router.post("/usersmessages" , getChatMessage)
 // router.post("/getsendermessages",getUserMessagesToReceiver);
 // router.post("/getreceiversmessages" , getReceiversMessagesFromSender);
-router.post('/createandaddcollaboration' , collaboratingUsers);
-router.post("/getroomdata",getRoomCollaborators)
+router.post('/createCollaboration' , createCollaboration);
+router.post("/addCollaborators",addCollaborators)
 router.post("/getNotification" , getChatNotification) 
+router.post("/getCollabDocsById" ,getCollaboratorDocs)
 router.post("updateNotification" , updateChatNotification);
 router.get("/getAllDocs",getAllDocument);
 router.post("/updateDocs",updateDocument)

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyUserAuth = exports.usersAuth = exports.hashPass = exports.generateSalt = void 0;
+exports.getChatNotifier = exports.verifyUserAuth = exports.usersAuth = exports.hashPass = exports.generateSalt = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../config");
@@ -38,3 +38,7 @@ const verifyUserAuth = (req) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.verifyUserAuth = verifyUserAuth;
+const getChatNotifier = (usersChatData) => __awaiter(void 0, void 0, void 0, function* () {
+    return usersChatData.filter((usersChat) => (usersChat === null || usersChat === void 0 ? void 0 : usersChat.isReceivedStatus) == false);
+});
+exports.getChatNotifier = getChatNotifier;

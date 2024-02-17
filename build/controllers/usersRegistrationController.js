@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userLoginByEmail = exports.getChatMessage = exports.getRoomCollaborators = exports.collaboratingUsers = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getChatNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
 const homePage = (req, res) => {
@@ -180,17 +180,20 @@ const getAllTemplates = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
 exports.getAllTemplates = getAllTemplates;
 const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id, email } = req.user;
-        const { receiversemail, message } = req.body;
+        // const { id, email } = <IRegistration>req.user;
+        const { sendersEmail, receiversemail, message } = req.body;
         const recieversData = yield client_1.default.user.findFirst({
             where: { email: receiversemail },
+        });
+        const senderData = yield client_1.default.user.findFirst({
+            where: { email: sendersEmail },
         });
         if ((recieversData === null || recieversData === void 0 ? void 0 : recieversData.id) != null) {
             const chatusers = yield client_1.default.chat.create({
                 data: {
-                    userEmail: email,
+                    userEmail: sendersEmail,
                     userMessage: message,
-                    senderUserId: id,
+                    senderUserId: senderData === null || senderData === void 0 ? void 0 : senderData.id,
                     receiverUserId: recieversData === null || recieversData === void 0 ? void 0 : recieversData.id,
                     isReceivedStatus: true,
                     user: {
@@ -217,166 +220,136 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.usersChat = usersChat;
-// export const getUserMessagesToReceiver = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   const { email } = req.body;
-//   const { id } = req.user;
-//   try {
-//     const receiverData = await prisma.user.findFirst({
-//       where: { email: email },
-//     });
-//     if (receiverData?.id != null) {
-//       const usersAllMessages = await prisma.chat.findMany({
-//         where: {
-//           senderUserId: id,
-//           receiverUserId: receiverData.id,
-//         },
-//       });
-//       res.json({ response: usersAllMessages, status: true });
-//     } else {
-//       res.json({
-//         response: `no such user with email ${email} exist `,
-//         status: false,
-//       });
-//     }
-//   } catch {
-//     res.json({ response: "server issue occured", status: false });
-//   }
-// };
-// export const getReceiversMessagesFromSender = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   try {
-//     const { email } = req.body;
-//     const usersReceivedMessaages = await prisma.chat.findMany({
-//       where: {
-//         senderUserId: email,
-//       },
-//     });
-//     res.json({ response: usersReceivedMessaages, status: true });
-//   } catch {
-//     res.json({ response: "server issue occured", status: false });
-//   }
-// };
-const collaboratingUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _m;
+const createCollaboration = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { docId, docName, roomId } = req.body;
+    console.log(req.body);
     try {
-        const { id } = req.user;
-        const { docid, docname, roomId, collabUsersEmail } = (req.body);
-        const getCollaboratingUsers = yield client_1.default.collaboratingUsers.findFirst({
+        const collab = yield client_1.default.collaborateDocs.findFirst({
             where: {
-                docid: docid,
                 roomId: roomId,
-            },
-            select: {
-                collabNumber: true,
+                docid: docId,
             },
         });
-        if (getCollaboratingUsers !== undefined &&
-            (getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) == 0) {
-            const collabData = yield client_1.default.collaboratingUsers.create({
+        if (collab == null) {
+            const collabCreated = yield client_1.default.collaborateDocs.create({
                 data: {
-                    collabNumber: collabUsersEmail === null || collabUsersEmail === void 0 ? void 0 : collabUsersEmail.length,
-                    docid: docid,
-                    docname: docname,
+                    docid: docId,
+                    docname: docName,
                     roomId: roomId,
-                    collabUsersEmail: collabUsersEmail,
-                    user: {
-                        connect: {
-                            id: id,
-                        },
-                    },
+                    requestingSignature: false,
                 },
             });
-            res.json({
-                response: collabData,
-                status: true,
-                message: "collaboration created successfully ",
-            });
-        }
-        else if ((getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) != undefined &&
-            (getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) > 0 &&
-            (getCollaboratingUsers === null || getCollaboratingUsers === void 0 ? void 0 : getCollaboratingUsers.collabNumber) <= MAX_COLLABORATORS) {
-            const findUpdate = yield client_1.default.collaboratingUsers.findFirst({
-                where: {
-                    docid: docid,
-                    roomId: roomId,
-                },
-            });
-            const updatesUsers = yield ((_m = client_1.default.collaboratingUsers) === null || _m === void 0 ? void 0 : _m.update({
-                where: {
-                    id: findUpdate === null || findUpdate === void 0 ? void 0 : findUpdate.id,
-                },
-                data: {
-                    collabNumber: collabUsersEmail === null || collabUsersEmail === void 0 ? void 0 : collabUsersEmail.length,
-                    collabUsersEmail: collabUsersEmail,
-                },
-            }));
-            res.json({
-                response: updatesUsers,
-                status: true,
-                message: "user email added as doc collaborator",
-            });
+            res.json({ response: "Document Collaboration created", status: true, message: collabCreated });
         }
         else {
             res.json({
-                message: "collaborating users reached maximum.Collaboration for this document is closed",
+                response: "Document Collaboration creation failed. Collaboration already exist",
                 status: false,
             });
         }
     }
-    catch (_o) {
-        res.json({ response: "server issue occured", status: false });
+    catch (err) {
+        res.json({ response: "server Error occured", status: false, error: err });
     }
 });
-exports.collaboratingUsers = collaboratingUsers;
-const getRoomCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.createCollaboration = createCollaboration;
+const addCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // add collaborators
+        const { roomId, collabUsersEmail } = req.body;
+        const isCollaboratorsAvailable = yield client_1.default.collaborateDocs.findFirst({
+            where: { roomId: roomId },
+            select: {
+                collaborator: {
+                    select: {
+                        userId: true,
+                    },
+                },
+            },
+        });
+        if (isCollaboratorsAvailable &&
+            isCollaboratorsAvailable.collaborator.length <= 0) {
+            const mainDoc = yield client_1.default.collaborateDocs.findFirst({
+                where: {
+                    roomId: roomId,
+                },
+            });
+            if (mainDoc) {
+                const joinCollaborators = yield client_1.default.collaborator.create({
+                    data: {
+                        userId: mainDoc === null || mainDoc === void 0 ? void 0 : mainDoc.id,
+                        collaboratorEmail: collabUsersEmail,
+                        isSigned: false,
+                    },
+                });
+                res.json({
+                    collaboratingDocsDetails: mainDoc,
+                    collaboratordetails: joinCollaborators,
+                    status: true,
+                    message: "User is added to Doc Collaboration",
+                });
+            }
+            else {
+                res.json({
+                    collaboratingDocsDetails: mainDoc,
+                    message: "No such Document to collaborate.",
+                });
+            }
+        }
+        else {
+            res.json({ response: "User is already a collaborator.", status: false });
+        }
+    }
+    catch (err) {
+        res.json({ response: "server Error occured", status: false, error: err });
+    }
+});
+exports.addCollaborators = addCollaborators;
+const getCollaboratorDocs = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { roomId } = req.body;
-        const roomdata = yield client_1.default.collaboratingUsers.findFirst({
+        const collabDocs = yield client_1.default.collaborateDocs.findMany({
             where: {
                 roomId: roomId,
             },
         });
-        if ((roomdata === null || roomdata === void 0 ? void 0 : roomdata.id) !== undefined) {
-            res.json({ response: roomdata, status: true });
-        }
-        else {
+        if (!(collabDocs.length <= 0)) {
             res.json({
-                response: roomdata,
-                statu: false,
-                message: "no such room found",
+                response: collabDocs,
+                status: true,
+                message: "Collaboration Document found",
             });
         }
+        else {
+            res.json({ message: "Collaboration Document Not found", status: false });
+        }
     }
-    catch (_p) {
-        res.json({ response: "server issue occured", status: false });
+    catch (err) {
+        res.json({ response: "server Error occured", status: false, error: err });
     }
 });
-exports.getRoomCollaborators = getRoomCollaborators;
+exports.getCollaboratorDocs = getCollaboratorDocs;
 const getChatMessage = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email } = req.body;
-    const { id } = req.user;
+    const { sendersEmail, recieversEmail } = req.body;
+    // const { id } = req.user;
     try {
         const receiverData = yield client_1.default.user.findFirst({
-            where: { email: email },
+            where: { email: recieversEmail },
         });
-        if ((receiverData === null || receiverData === void 0 ? void 0 : receiverData.id) != null) {
+        const senderData = yield client_1.default.user.findFirst({
+            where: { email: sendersEmail },
+        });
+        if ((receiverData === null || receiverData === void 0 ? void 0 : receiverData.id) != null && (senderData === null || senderData === void 0 ? void 0 : senderData.id) != null) {
             const sentMessages = yield client_1.default.chat.findMany({
                 where: {
-                    senderUserId: id,
-                    receiverUserId: receiverData.id,
+                    userEmail: sendersEmail,
+                    receiverUserId: receiverData === null || receiverData === void 0 ? void 0 : receiverData.id,
                 },
             });
             const receiversMessages = yield client_1.default.chat.findMany({
                 where: {
-                    senderUserId: receiverData.id,
-                    receiverUserId: id,
+                    userEmail: recieversEmail,
+                    receiverUserId: senderData === null || senderData === void 0 ? void 0 : senderData.id,
                 },
             });
             res.json({
@@ -387,12 +360,12 @@ const getChatMessage = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         }
         else {
             res.json({
-                response: `no such user with email ${email} exist `,
+                response: `no such user with email ${recieversEmail} exist `,
                 status: false,
             });
         }
     }
-    catch (_q) {
+    catch (_m) {
         res.json({ response: "server issue occured", status: false });
     }
 });
@@ -419,8 +392,120 @@ const userLoginByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             res.json({ response: "user not found ", status: false });
         }
     }
-    catch (_r) {
+    catch (_o) {
         res.json({ response: "error occured", status: false });
     }
 });
 exports.userLoginByEmail = userLoginByEmail;
+const getChatNotification = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { receiverUserId } = req.body;
+    // const { id } = req.user;
+    try {
+        const receiverData = yield client_1.default.chat.findMany({
+            where: { receiverUserId: receiverUserId, isReceivedStatus: false },
+        });
+        if (receiverData.length != 0) {
+            let userNotify = yield (0, useHook_1.getChatNotifier)(receiverData);
+            res.json({
+                response: userNotify,
+                message: "users notification",
+            });
+        }
+        else {
+            res.json({
+                response: [],
+                message: "No Notification for User",
+            });
+        }
+    }
+    catch (_p) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.getChatNotification = getChatNotification;
+const updateChatNotification = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { chatId } = req.body;
+    // const { id } = req.user;
+    try {
+        const receiverData = yield client_1.default.chat.update({
+            where: {
+                id: chatId,
+            },
+            data: {
+                isReceivedStatus: true,
+            },
+        });
+        if ((receiverData === null || receiverData === void 0 ? void 0 : receiverData.id) != null) {
+            res.json({
+                response: receiverData,
+                message: `users notification with id ${receiverData.id} was updated successfully `,
+            });
+        }
+        else {
+            res.json({
+                response: false,
+                message: `users notification with id ${chatId} failed`,
+            });
+        }
+    }
+    catch (_q) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.updateChatNotification = updateChatNotification;
+const updateDocument = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { docid, docname, doclink, userUpdateDoc, templateType, isEncrypted, securityCode, docformat, } = req.body;
+        const docData = yield client_1.default.document.update({
+            where: {
+                docid: docid,
+            },
+            data: {
+                docname: docname,
+                doclink: doclink,
+                userUpdateDoc: userUpdateDoc,
+                templateType: templateType,
+                isEncrypted: isEncrypted,
+                securityCode: securityCode,
+                docformat: docformat,
+            },
+        });
+        if (docData.docid != null) {
+            res.json({
+                response: docData,
+                message: `Document with id ${docData.id} was updated successfully `,
+            });
+        }
+        else {
+            res.json({
+                response: docData,
+                message: `Document update failed `,
+            });
+        }
+    }
+    catch (err) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.updateDocument = updateDocument;
+const getAllDocument = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const allDocs = yield client_1.default.document.findMany();
+        if (allDocs.length != 0) {
+            res.json({
+                response: allDocs,
+                message: `All templates collected successfully `,
+            });
+        }
+        else {
+            res.json({
+                response: allDocs,
+                message: `Template Collection failed `,
+            });
+        }
+    }
+    catch (err) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.getAllDocument = getAllDocument;
