@@ -15,10 +15,22 @@ const storage = multer_1.default.diskStorage({
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.originalname + '-' + uniqueSuffix);
+        cb(null, uniqueSuffix + '-' + file.originalname);
+    }
+});
+const fileConvert = multer_1.default.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'src/convertedFiles/');
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + file.originalname);
     }
 });
 const upload = (0, multer_1.default)({ storage: storage }).array("template");
+const singleFileConvert = (0, multer_1.default)({
+    storage: fileConvert
+}).single('convert');
 router.get('/', controllers_1.homePage);
 router.get("/getTemplates", controllers_1.getAllTemplates);
 router.post("/login", controllers_1.userLogin);
@@ -39,4 +51,5 @@ router.post("/getCollabDocsById", controllers_1.getCollaboratorDocs);
 router.post("updateNotification", controllers_1.updateChatNotification);
 router.get("/getAllDocs", controllers_1.getAllDocument);
 router.post("/updateDocs", controllers_1.updateDocument);
+router.post("/fileconverter", singleFileConvert, controllers_1.fileConverter);
 exports.default = router;

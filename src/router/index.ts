@@ -1,6 +1,6 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
 import Cors from 'cors'
-import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, createCollaboration, addCollaborators , getCollaboratorDocs , userLoginByEmail, getChatNotification, updateChatNotification, getAllDocument, updateDocument} from '../controllers';
+import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, createCollaboration, addCollaborators , getCollaboratorDocs , userLoginByEmail, getChatNotification, updateChatNotification, getAllDocument, updateDocument ,   fileConverter} from '../controllers';
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
 
@@ -15,12 +15,27 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-      cb(null, file.originalname+ '-' + uniqueSuffix)
+      cb(null,uniqueSuffix+ '-' +  file.originalname)
     }
   })
   
+
+  const fileConvert = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'src/convertedFiles/')
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+      cb(null,uniqueSuffix+ '-' +  file.originalname)
+    }
+  })
+
+
   const upload = multer({ storage: storage }).array("template");
 
+  const singleFileConvert = multer({
+    storage: fileConvert
+  }).single('convert');
 
 
 router.get('/' , homePage);
@@ -43,6 +58,7 @@ router.post("/getNotification" , getChatNotification)
 router.post("/getCollabDocsById" ,getCollaboratorDocs)
 router.post("updateNotification" , updateChatNotification);
 router.get("/getAllDocs",getAllDocument);
-router.post("/updateDocs",updateDocument)
+router.post("/updateDocs",updateDocument);
+router.post("/fileconverter",singleFileConvert,fileConverter)
 
 export default router ; 

@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getChatNotifier = exports.verifyUserAuth = exports.usersAuth = exports.hashPass = exports.generateSalt = void 0;
+exports.getFileName = exports.getAbsolutePath = exports.getChatNotifier = exports.verifyUserAuth = exports.usersAuth = exports.hashPass = exports.generateSalt = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../config");
+const path_1 = __importDefault(require("path"));
 const generateSalt = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield bcrypt_1.default.genSalt();
 });
@@ -42,3 +43,11 @@ const getChatNotifier = (usersChatData) => __awaiter(void 0, void 0, void 0, fun
     return usersChatData.filter((usersChat) => (usersChat === null || usersChat === void 0 ? void 0 : usersChat.isReceivedStatus) == false);
 });
 exports.getChatNotifier = getChatNotifier;
+const getAbsolutePath = (LinkPathDots, parentFolder, folderName, fileName) => {
+    return path_1.default.join(path_1.default.resolve(__dirname, LinkPathDots, parentFolder, folderName), fileName);
+};
+exports.getAbsolutePath = getAbsolutePath;
+const getFileName = (filenameWithExtension) => {
+    return path_1.default.basename(filenameWithExtension, path_1.default.extname(filenameWithExtension));
+};
+exports.getFileName = getFileName;

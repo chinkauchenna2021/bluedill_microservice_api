@@ -12,9 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getChatNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.fileConverter = exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getChatNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
+const convertapi_1 = __importDefault(require("convertapi"));
+const convertapi = new convertapi_1.default("r0ps82oFwtrDLyGO", { conversionTimeout: 60 });
 const homePage = (req, res) => {
     res.json({ message: "running successfully" });
 };
@@ -312,6 +316,9 @@ const getCollaboratorDocs = (req, res, next) => __awaiter(void 0, void 0, void 0
             where: {
                 roomId: roomId,
             },
+            include: {
+                collaborator: true
+            }
         });
         if (!(collabDocs.length <= 0)) {
             res.json({
@@ -509,3 +516,29 @@ const getAllDocument = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getAllDocument = getAllDocument;
+const fileConverter = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const convertFormat = "pdf";
+        const fileupload = req.file;
+        const filename = fileupload.filename;
+        const filenameWithoutExt = (0, useHook_1.getFileName)(filename);
+        const fileLink = (0, useHook_1.getAbsolutePath)("../..", "src", "convertedFiles", filename);
+        const outputPath = (0, useHook_1.getAbsolutePath)("../..", "src", "convertedFiles/fileConversionOutput", filenameWithoutExt + "." + convertFormat);
+        const result = yield convertapi.convert(convertFormat, { File: fileLink }).then(function (result) {
+            // get converted file url
+            console.log("Converted file url: " + result.file.url);
+            res.json({ response_local_url: fileLink, onlineSavedFile: result.file.url, message: "file converted successfully", status: true });
+            return result.file.save(outputPath);
+        })
+            .then(function (file) {
+            console.log("File saved: " + file);
+        })
+            .catch(function (e) {
+            console.error(e.toString());
+        });
+    }
+    catch (err) {
+        res.json({ message: "server error occured", status: false, error: err });
+    }
+});
+exports.fileConverter = fileConverter;

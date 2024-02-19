@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { IRegistration , IChatNotifier } from '../dto/usersRegistration.dto';
 import { AUTH_SECRET_KEY } from '../config';
+import path from 'path';
 
 
 
@@ -37,6 +38,14 @@ export const getChatNotifier = async (usersChatData: IChatNotifier[]) =>{
 
 
 
+export const getAbsolutePath = (LinkPathDots:string , parentFolder:string ,  folderName:string , fileName:string) =>{
+  
+  return path.join(path.resolve(__dirname,LinkPathDots,parentFolder,folderName) ,fileName)
+}
 
 
 
+
+export const getFileName = (filenameWithExtension:string)=>{
+    return  path.basename(filenameWithExtension, path.extname(filenameWithExtension));
+}

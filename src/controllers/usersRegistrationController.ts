@@ -8,9 +8,14 @@ import {
   IDocUpdate,
 } from "../dto/usersRegistration.dto";
 
+import { config } from "dotenv";
+config();
+
 import {
   generateSalt,
+  getAbsolutePath,
   getChatNotifier,
+  getFileName,
   hashPass,
   usersAuth,
 } from "../utilities/useHook";
@@ -18,14 +23,31 @@ import prisma from "../model/prismaClient/client";
 import { ClassValidation } from "../dto/ClassValidation";
 import { plainToClass } from "class-transformer";
 import { validate } from "class-validator";
-import { Multer } from "multer";
+import multer  from "multer";
 import { connect } from "http2";
+// import { convertWordFiles } from 'convert-multiple-files';
+import path from 'path'
+import fs from 'fs/promises'
+
+import { callbackPromise } from "nodemailer/lib/shared";
+import ConvertAPI from 'convertapi';
+
+const convertapi = new ConvertAPI("r0ps82oFwtrDLyGO",{ conversionTimeout: 60 });
+
 
 export const homePage = (req: Request, res: Response) => {
   res.json({ message: "running successfully" });
 };
 
 const MAX_COLLABORATORS = 5;
+
+
+
+
+
+
+
+
 
 export const userOnboarding = async (req: Request, res: Response) => {
   try {
@@ -582,3 +604,41 @@ export const getAllDocument = async (
     res.json({ response: "server issue occured", status: false });
   }
 };
+
+
+
+
+export const fileConverter = async (
+  req:Request,
+  res:Response,
+  next:NextFunction
+) =>{
+  try{
+    const convertFormat = "pdf" ; 
+    const fileupload = req.file as unknown as Express.Multer.File;
+    const filename = fileupload.filename as string;
+    const filenameWithoutExt = getFileName(filename);
+    const fileLink =  getAbsolutePath("../..","src","convertedFiles" , filename) 
+    const outputPath =  getAbsolutePath("../..","src","convertedFiles/fileConversionOutput" , filenameWithoutExt + "." + convertFormat) 
+
+    const result = await convertapi.convert(convertFormat, { File: fileLink }).then(function(result) {
+      // get converted file url
+      console.log("Converted file url: " + result.file.url);
+      res.json({response_local_url:fileLink,onlineSavedFile:result.file.url , message:"file converted successfully" , status:true})
+
+       return result.file.save(outputPath);
+    })
+    .then(function(file) {
+      console.log("File saved: " + file);
+    })
+    .catch(function(e) {
+       res.json({message:"error occured during file conversion"});
+    });
+
+  }catch(err){
+   res.json({message:"server error occured" , status:false , error:err})
+
+  }
+
+}
+
