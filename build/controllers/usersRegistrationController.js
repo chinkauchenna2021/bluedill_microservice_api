@@ -12,13 +12,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fileConverter = exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getChatNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.decryptFile = exports.encryptFile = exports.fileConverter = exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getChatNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
+// import { convertWordFiles } from 'convert-multiple-files';
+const path_1 = __importDefault(require("path"));
+const promises_1 = __importDefault(require("fs/promises"));
 const convertapi_1 = __importDefault(require("convertapi"));
-const convertapi = new convertapi_1.default("r0ps82oFwtrDLyGO", { conversionTimeout: 60 });
+const convertapi = new convertapi_1.default("r0ps82oFwtrDLyGO", {
+    conversionTimeout: 60,
+});
+const cryptify_1 = __importDefault(require("cryptify"));
 const homePage = (req, res) => {
     res.json({ message: "running successfully" });
 };
@@ -243,7 +249,11 @@ const createCollaboration = (req, res) => __awaiter(void 0, void 0, void 0, func
                     requestingSignature: false,
                 },
             });
-            res.json({ response: "Document Collaboration created", status: true, message: collabCreated });
+            res.json({
+                response: "Document Collaboration created",
+                status: true,
+                message: collabCreated,
+            });
         }
         else {
             res.json({
@@ -317,8 +327,8 @@ const getCollaboratorDocs = (req, res, next) => __awaiter(void 0, void 0, void 0
                 roomId: roomId,
             },
             include: {
-                collaborator: true
-            }
+                collaborator: true,
+            },
         });
         if (!(collabDocs.length <= 0)) {
             res.json({
@@ -518,23 +528,30 @@ const getAllDocument = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
 exports.getAllDocument = getAllDocument;
 const fileConverter = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const convertFormat = "pdf";
+        const { convertFormat } = req.body;
         const fileupload = req.file;
         const filename = fileupload.filename;
         const filenameWithoutExt = (0, useHook_1.getFileName)(filename);
         const fileLink = (0, useHook_1.getAbsolutePath)("../..", "src", "convertedFiles", filename);
         const outputPath = (0, useHook_1.getAbsolutePath)("../..", "src", "convertedFiles/fileConversionOutput", filenameWithoutExt + "." + convertFormat);
-        const result = yield convertapi.convert(convertFormat, { File: fileLink }).then(function (result) {
+        const result = yield convertapi
+            .convert(convertFormat, { File: fileLink })
+            .then(function (result) {
             // get converted file url
             console.log("Converted file url: " + result.file.url);
-            res.json({ response_local_url: fileLink, onlineSavedFile: result.file.url, message: "file converted successfully", status: true });
+            res.json({
+                response_local_url: fileLink,
+                onlineSavedFile: result.file.url,
+                message: "file converted successfully",
+                status: true,
+            });
             return result.file.save(outputPath);
         })
             .then(function (file) {
             console.log("File saved: " + file);
         })
             .catch(function (e) {
-            console.error(e.toString());
+            res.json({ message: "error occured during file conversion" });
         });
     }
     catch (err) {
@@ -542,3 +559,80 @@ const fileConverter = (req, res, next) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.fileConverter = fileConverter;
+const encryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const password = "OkayChinka@2021";
+        if (password !== null) {
+            const fileupload = req.file;
+            const filename = fileupload.filename;
+            const fileLink = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt", filename);
+            const outputPath = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt/encryptOutput", "encoded-" + filename);
+            const cryptifyResponse = new cryptify_1.default(fileLink, password);
+            cryptifyResponse
+                .encrypt()
+                .then((files) => {
+                /* Do stuff */
+                if (files == undefined)
+                    return;
+                promises_1.default.writeFile(outputPath, files[0]);
+                (0, useHook_1.removeFile)(fileLink);
+                res.json({
+                    response: outputPath,
+                    status: true,
+                    password: password,
+                    message: "file successfully encrypted",
+                });
+            })
+                .catch((e) => res.json({ response: e, status: false, message: "encryption failed" }));
+        }
+        else {
+            res.json({ status: false, message: "Password is missing" });
+        }
+    }
+    catch (err) {
+        res.json({ message: "server error occured", status: false, error: err });
+    }
+});
+exports.encryptFile = encryptFile;
+const decryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { decryptFileName } = req.body;
+        const password = "okayChinka4@2021";
+        // C:/Users/HP/Desktop/bluedill_microservice/bluedill_microservice_api/src/encrypt/encryptOutput/encoded-1708461537527-340778463-Constitution LAST AMENDMENT.docx
+        //     const filename = "";
+        const fileLink = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt/encryptOutput", decryptFileName);
+        let fileName = (0, useHook_1.getFileName)(decryptFileName);
+        let ext = path_1.default.extname(decryptFileName);
+        let fileNameWithoutEncode = fileName.split("-").splice(1, 3).join("-");
+        const getFolderPaths = (0, useHook_1.getFolderPath)("../..", "src", "encrypt/encryptOutput");
+        const folderFiles = yield promises_1.default.readdir(getFolderPaths);
+        const isFileFound = folderFiles.includes(decryptFileName);
+        const realFileName = fileNameWithoutEncode + ext;
+        const outputPath = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt", realFileName);
+        if (isFileFound) {
+            console.log(fileLink, folderFiles);
+            const instancess = new cryptify_1.default(fileLink, password);
+            instancess.decrypt().then((files) => {
+                /* Do stuff */
+                console.log("file is ready ", outputPath);
+                if (files == undefined)
+                    return;
+                promises_1.default.writeFile(outputPath, files[0]);
+                (0, useHook_1.removeFile)(fileLink);
+                res.json({ response: outputPath, status: true, password: password, message: "file successfully decrypted" });
+            }).catch((e) => res.json({ response: e, status: false, message: "decryption failed" }));
+        }
+        else {
+            res.json({ message: "decrypting file does not exist ", status: true });
+        }
+    }
+    catch (err) {
+        res.json({ message: "server error occured", status: false, error: err });
+    }
+});
+exports.decryptFile = decryptFile;
+// Password Requirements:
+// 1. Must contain at least 8 characters
+// 2. Must contain at least 1 special character
+// 3. Must contain at least 1 numeric character
+// 4. Must contain a combination of uppercase and lowercase

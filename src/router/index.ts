@@ -1,6 +1,27 @@
 import express, { Express, Request, Response , NextFunction } from 'express';
 import Cors from 'cors'
-import { userOnboarding ,  homePage , userLogin  , userRecoverPassword ,searchUsersByEmail , adminUploadTemplates , getAllTemplates, usersChat, getChatMessage, createCollaboration, addCollaborators , getCollaboratorDocs , userLoginByEmail, getChatNotification, updateChatNotification, getAllDocument, updateDocument ,   fileConverter} from '../controllers';
+import {
+  userOnboarding,
+  homePage,
+  userLogin,
+  userRecoverPassword,
+  searchUsersByEmail,
+  adminUploadTemplates,
+  getAllTemplates,
+  usersChat,
+  getChatMessage,
+  createCollaboration,
+  addCollaborators,
+  getCollaboratorDocs,
+  userLoginByEmail,
+  getChatNotification,
+  updateChatNotification,
+  getAllDocument,
+  updateDocument,
+  fileConverter,
+  encryptFile,
+  decryptFile,
+} from "../controllers";
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
 
@@ -31,11 +52,27 @@ const storage = multer.diskStorage({
   })
 
 
+  const encryptFiles = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'src/encrypt/')
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+      cb(null,uniqueSuffix+ '-' +  file.originalname)
+    }
+  })
+
+
   const upload = multer({ storage: storage }).array("template");
 
   const singleFileConvert = multer({
     storage: fileConvert
   }).single('convert');
+
+  const encryptStorage = multer({
+    storage: encryptFiles
+  }).single('encrypt');
+
 
 
 router.get('/' , homePage);
@@ -59,6 +96,8 @@ router.post("/getCollabDocsById" ,getCollaboratorDocs)
 router.post("updateNotification" , updateChatNotification);
 router.get("/getAllDocs",getAllDocument);
 router.post("/updateDocs",updateDocument);
+// encryptFile
 router.post("/fileconverter",singleFileConvert,fileConverter)
-
+router.post("/encryptFile",encryptStorage,encryptFile)
+router.post("/decryptFile",decryptFile)
 export default router ; 

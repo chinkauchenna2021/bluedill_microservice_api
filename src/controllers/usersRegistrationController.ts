@@ -15,39 +15,44 @@ import {
   generateSalt,
   getAbsolutePath,
   getChatNotifier,
+  getDecryptFile,
+  getEncryptFile,
+  getFileFromPath,
   getFileName,
+  getFolderPath,
   hashPass,
+  removeFile,
+  searchFileInFolder,
   usersAuth,
 } from "../utilities/useHook";
 import prisma from "../model/prismaClient/client";
 import { ClassValidation } from "../dto/ClassValidation";
 import { plainToClass } from "class-transformer";
 import { validate } from "class-validator";
-import multer  from "multer";
+import multer from "multer";
 import { connect } from "http2";
 // import { convertWordFiles } from 'convert-multiple-files';
-import path from 'path'
-import fs from 'fs/promises'
+import path from "path";
+import fs from "fs/promises";
 
 import { callbackPromise } from "nodemailer/lib/shared";
-import ConvertAPI from 'convertapi';
+import ConvertAPI from "convertapi";
+import { string } from "zod";
 
-const convertapi = new ConvertAPI("r0ps82oFwtrDLyGO",{ conversionTimeout: 60 });
 
+
+
+const convertapi = new ConvertAPI("r0ps82oFwtrDLyGO", {
+  conversionTimeout: 60,
+});
+
+import Cryptify from "cryptify";
 
 export const homePage = (req: Request, res: Response) => {
   res.json({ message: "running successfully" });
 };
 
 const MAX_COLLABORATORS = 5;
-
-
-
-
-
-
-
-
 
 export const userOnboarding = async (req: Request, res: Response) => {
   try {
@@ -289,7 +294,11 @@ export const createCollaboration = async (req: Request, res: Response) => {
           requestingSignature: false,
         },
       });
-      res.json({ response: "Document Collaboration created", status: true , message:collabCreated });
+      res.json({
+        response: "Document Collaboration created",
+        status: true,
+        message: collabCreated,
+      });
     } else {
       res.json({
         response:
@@ -310,7 +319,7 @@ export const addCollaborators = async (
   try {
     // add collaborators
 
-    const { roomId, collabUsersEmail} = req.body;
+    const { roomId, collabUsersEmail } = req.body;
 
     const isCollaboratorsAvailable = await prisma.collaborateDocs.findFirst({
       where: { roomId: roomId },
@@ -333,7 +342,7 @@ export const addCollaborators = async (
         },
       });
 
-      if(mainDoc){
+      if (mainDoc) {
         const joinCollaborators = await prisma.collaborator.create({
           data: {
             userId: mainDoc?.id,
@@ -347,14 +356,12 @@ export const addCollaborators = async (
           status: true,
           message: "User is added to Doc Collaboration",
         });
-      }else{
+      } else {
         res.json({
           collaboratingDocsDetails: mainDoc,
           message: "No such Document to collaborate.",
         });
-
       }
-
     } else {
       res.json({ response: "User is already a collaborator.", status: false });
     }
@@ -375,9 +382,9 @@ export const getCollaboratorDocs = async (
       where: {
         roomId: roomId,
       },
-      include:{
-        collaborator:true
-      }
+      include: {
+        collaborator: true,
+      },
     });
     if (!(collabDocs.length <= 0)) {
       res.json({
@@ -605,40 +612,152 @@ export const getAllDocument = async (
   }
 };
 
-
-
-
 export const fileConverter = async (
-  req:Request,
-  res:Response,
-  next:NextFunction
-) =>{
-  try{
-    const convertFormat = "pdf" ; 
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { convertFormat } = req.body;
     const fileupload = req.file as unknown as Express.Multer.File;
     const filename = fileupload.filename as string;
     const filenameWithoutExt = getFileName(filename);
-    const fileLink =  getAbsolutePath("../..","src","convertedFiles" , filename) 
-    const outputPath =  getAbsolutePath("../..","src","convertedFiles/fileConversionOutput" , filenameWithoutExt + "." + convertFormat) 
+    const fileLink = getAbsolutePath(
+      "../..",
+      "src",
+      "convertedFiles",
+      filename
+    );
+    const outputPath = getAbsolutePath(
+      "../..",
+      "src",
+      "convertedFiles/fileConversionOutput",
+      filenameWithoutExt + "." + convertFormat
+    );
 
-    const result = await convertapi.convert(convertFormat, { File: fileLink }).then(function(result) {
-      // get converted file url
-      console.log("Converted file url: " + result.file.url);
-      res.json({response_local_url:fileLink,onlineSavedFile:result.file.url , message:"file converted successfully" , status:true})
+    const result = await convertapi
+      .convert(convertFormat, { File: fileLink })
+      .then(function (result) {
+        // get converted file url
+        console.log("Converted file url: " + result.file.url);
+        res.json({
+          response_local_url: fileLink,
+          onlineSavedFile: result.file.url,
+          message: "file converted successfully",
+          status: true,
+        });
 
-       return result.file.save(outputPath);
-    })
-    .then(function(file) {
-      console.log("File saved: " + file);
-    })
-    .catch(function(e) {
-       res.json({message:"error occured during file conversion"});
-    });
-
-  }catch(err){
-   res.json({message:"server error occured" , status:false , error:err})
-
+        return result.file.save(outputPath);
+      })
+      .then(function (file) {
+        console.log("File saved: " + file);
+      })
+      .catch(function (e) {
+        res.json({ message: "error occured during file conversion" });
+      });
+  } catch (err) {
+    res.json({ message: "server error occured", status: false, error: err });
   }
+};
 
-}
+export const encryptFile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const {password} =  req.body;
+    if (password !== null) {
+      const fileupload = req.file as unknown as Express.Multer.File;
+      const filename = fileupload.filename as string;
+      const fileLink = getAbsolutePath("../..", "src", "encrypt", filename);
+      const outputPath = getAbsolutePath(
+        "../..",
+        "src",
+        "encrypt/encryptOutput",
+        "encoded-" + filename
+      );
+      const cryptifyResponse = new Cryptify(fileLink, password);
+      cryptifyResponse
+        .encrypt()
+        .then((files) => {
+          /* Do stuff */
+          if (files == undefined) return;
+          fs.writeFile(outputPath, files[0]);
+          removeFile(fileLink);
+          res.json({
+            response: outputPath,
+            status: true,
+            password: password,
+            message: "file successfully encrypted",
+          });
+        })
+        .catch((e) =>
+          res.json({ response: e, status: false, message: "encryption failed" })
+        );
+    } else {
+      res.json({ status: false, message: "Password is missing" });
+    }
+  } catch (err) {
+    res.json({ message: "server error occured", status: false, error: err });
+  }
+};
 
+export const decryptFile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { decryptFileName , password  } = req.body;
+    // const password = "okayChinka4@2021";
+
+    const fileLink = getAbsolutePath(
+      "../..",
+      "src",
+      "encrypt/encryptOutput",
+      decryptFileName
+    );
+
+    let fileName = getFileName(decryptFileName);
+    let ext = path.extname(decryptFileName);
+    let fileNameWithoutEncode = fileName.split("-").splice(1, 3).join("-");
+
+    const getFolderPaths = getFolderPath(
+      "../..",
+      "src",
+      "encrypt/encryptOutput"
+    );
+    const folderFiles = await fs.readdir(getFolderPaths);
+    const isFileFound = folderFiles.includes(decryptFileName);
+
+    const realFileName = fileNameWithoutEncode + ext;
+    const outputPath = getAbsolutePath("../..", "src", "encrypt", realFileName);
+    
+    if (isFileFound) {
+
+      console.log(fileLink , folderFiles)
+      const instancess = new Cryptify(fileLink,password);
+      instancess.decrypt().then((files) => {
+          /* Do stuff */
+          console.log( "file is ready " , outputPath);
+          if(files == undefined) return ; 
+          fs.writeFile(outputPath , files[0])
+          removeFile(fileLink);
+           res.json({response:outputPath , status:true ,password:password , message:"file successfully decrypted"})
+        }).catch((e) =>
+          res.json({ response: e, status: false, message: "decryption failed" })
+        );
+    } else {
+      res.json({ message: "decrypting file does not exist ", status: true });
+    }
+  } catch (err) {
+    res.json({ message: "server error occured", status: false, error: err });
+  }
+};
+
+// Password Requirements:
+// 1. Must contain at least 8 characters
+// 2. Must contain at least 1 special character
+// 3. Must contain at least 1 numeric character
+// 4. Must contain a combination of uppercase and lowercase

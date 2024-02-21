@@ -46,17 +46,30 @@ model Collaborator {
 }
 
 model Document {
-  id            String   @id @default(uuid())
-  docid         String   @unique
-  docname       String
-  doclink       String
-  userUpdateDoc String
-  templateType  String
-  isEncrypted   Boolean  @default(false)
-  securityCode  String?
-  docformat     String   @default("lexical")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String           @id @default(uuid())
+  docid          String           @unique
+  docname        String
+  doclink        String
+  userUpdateDoc  String
+  templateType   String
+  isEncrypted    Boolean          @default(false)
+  securityCode   String?
+  docsEncryption DocsEncryption[]
+  docformat      String           @default("lexical")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model DocsEncryption {
+  id                 String   @id @default(uuid())
+  encryptionLink     String
+  encryptionPassword String
+  document           Document @relation(fields: [encryptId], references: [id])
+  encryptId          String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([encryptId])
 }
 
 model Chat {
