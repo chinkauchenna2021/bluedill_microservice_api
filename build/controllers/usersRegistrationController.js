@@ -561,7 +561,7 @@ const fileConverter = (req, res, next) => __awaiter(void 0, void 0, void 0, func
 exports.fileConverter = fileConverter;
 const encryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const password = "OkayChinka@2021";
+        const password = "OkayCkinka@2021";
         if (password !== null) {
             const fileupload = req.file;
             const filename = fileupload.filename;
@@ -575,7 +575,6 @@ const encryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 if (files == undefined)
                     return;
                 promises_1.default.writeFile(outputPath, files[0]);
-                (0, useHook_1.removeFile)(fileLink);
                 res.json({
                     response: outputPath,
                     status: true,
@@ -596,31 +595,21 @@ const encryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
 exports.encryptFile = encryptFile;
 const decryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { decryptFileName } = req.body;
-        const password = "okayChinka4@2021";
-        // C:/Users/HP/Desktop/bluedill_microservice/bluedill_microservice_api/src/encrypt/encryptOutput/encoded-1708461537527-340778463-Constitution LAST AMENDMENT.docx
-        //     const filename = "";
+        const { decryptFileName, password } = req.body;
         const fileLink = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt/encryptOutput", decryptFileName);
         let fileName = (0, useHook_1.getFileName)(decryptFileName);
         let ext = path_1.default.extname(decryptFileName);
         let fileNameWithoutEncode = fileName.split("-").splice(1, 3).join("-");
         const getFolderPaths = (0, useHook_1.getFolderPath)("../..", "src", "encrypt/encryptOutput");
+        const parentFolder = (0, useHook_1.getFolderPath)("../..", "src", "encrypt");
         const folderFiles = yield promises_1.default.readdir(getFolderPaths);
         const isFileFound = folderFiles.includes(decryptFileName);
         const realFileName = fileNameWithoutEncode + ext;
-        const outputPath = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt", realFileName);
+        const parentRoot = yield promises_1.default.readdir(parentFolder);
+        const parentRootCollection = parentRoot.filter((file) => file == realFileName)[0];
         if (isFileFound) {
-            console.log(fileLink, folderFiles);
-            const instancess = new cryptify_1.default(fileLink, password);
-            instancess.decrypt().then((files) => {
-                /* Do stuff */
-                console.log("file is ready ", outputPath);
-                if (files == undefined)
-                    return;
-                promises_1.default.writeFile(outputPath, files[0]);
-                (0, useHook_1.removeFile)(fileLink);
-                res.json({ response: outputPath, status: true, password: password, message: "file successfully decrypted" });
-            }).catch((e) => res.json({ response: e, status: false, message: "decryption failed" }));
+            const outputPath = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt", parentRootCollection);
+            res.json({ response: outputPath, message: "decryption successfull", status: true });
         }
         else {
             res.json({ message: "decrypting file does not exist ", status: true });

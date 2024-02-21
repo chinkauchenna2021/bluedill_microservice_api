@@ -666,7 +666,7 @@ export const encryptFile = async (
   next: NextFunction
 ) => {
   try {
-    const {password} =  req.body;
+    const {password }=  req.body;
     if (password !== null) {
       const fileupload = req.file as unknown as Express.Multer.File;
       const filename = fileupload.filename as string;
@@ -684,7 +684,6 @@ export const encryptFile = async (
           /* Do stuff */
           if (files == undefined) return;
           fs.writeFile(outputPath, files[0]);
-          removeFile(fileLink);
           res.json({
             response: outputPath,
             status: true,
@@ -710,7 +709,6 @@ export const decryptFile = async (
 ) => {
   try {
     const { decryptFileName , password  } = req.body;
-    // const password = "okayChinka4@2021";
 
     const fileLink = getAbsolutePath(
       "../..",
@@ -728,26 +726,17 @@ export const decryptFile = async (
       "src",
       "encrypt/encryptOutput"
     );
+
+    const parentFolder = getFolderPath("../..","src","encrypt");
     const folderFiles = await fs.readdir(getFolderPaths);
     const isFileFound = folderFiles.includes(decryptFileName);
 
-    const realFileName = fileNameWithoutEncode + ext;
-    const outputPath = getAbsolutePath("../..", "src", "encrypt", realFileName);
-    
+    const realFileName = fileNameWithoutEncode+ext;
+    const parentRoot = await  fs.readdir(parentFolder);
+    const parentRootCollection =  parentRoot.filter((file)=>file == realFileName)[0]
     if (isFileFound) {
-
-      console.log(fileLink , folderFiles)
-      const instancess = new Cryptify(fileLink,password);
-      instancess.decrypt().then((files) => {
-          /* Do stuff */
-          console.log( "file is ready " , outputPath);
-          if(files == undefined) return ; 
-          fs.writeFile(outputPath , files[0])
-          removeFile(fileLink);
-           res.json({response:outputPath , status:true ,password:password , message:"file successfully decrypted"})
-        }).catch((e) =>
-          res.json({ response: e, status: false, message: "decryption failed" })
-        );
+      const outputPath = getAbsolutePath("../..", "src", "encrypt", parentRootCollection);
+         res.json({response:outputPath, message:"decryption successfull" , status :true});
     } else {
       res.json({ message: "decrypting file does not exist ", status: true });
     }
