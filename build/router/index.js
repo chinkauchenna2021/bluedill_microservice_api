@@ -67,4 +67,5 @@ router.post("/updateDocs", controllers_1.updateDocument);
 router.post("/fileconverter", singleFileConvert, controllers_1.fileConverter);
 router.post("/encryptFile", encryptStorage, controllers_1.encryptFile);
 router.post("/decryptFile", controllers_1.decryptFile);
+router.get("/generatePassword/:length", controllers_1.generatePassword);
 exports.default = router;

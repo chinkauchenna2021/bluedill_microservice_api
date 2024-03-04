@@ -21,6 +21,7 @@ import {
   fileConverter,
   encryptFile,
   decryptFile,
+  generatePassword
 } from "../controllers";
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
@@ -100,4 +101,5 @@ router.post("/updateDocs",updateDocument);
 router.post("/fileconverter",singleFileConvert,fileConverter)
 router.post("/encryptFile",encryptStorage,encryptFile)
 router.post("/decryptFile",decryptFile)
+router.get("/generatePassword/:length", generatePassword);
 export default router ; 

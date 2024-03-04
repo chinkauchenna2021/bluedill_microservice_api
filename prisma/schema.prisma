@@ -86,3 +86,12 @@ model Chat {
 
   @@index([userId])
 }
+
+
+
+model generatePassword{
+    id String @id @default(uuid())
+    password String
+    createdAt        DateTime @default(now())
+    updatedAt        DateTime @updatedAt
+}

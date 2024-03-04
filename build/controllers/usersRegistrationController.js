@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decryptFile = exports.encryptFile = exports.fileConverter = exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getChatNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.generatePassword = exports.decryptFile = exports.encryptFile = exports.fileConverter = exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getChatNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const useHook_1 = require("../utilities/useHook");
@@ -561,7 +561,7 @@ const fileConverter = (req, res, next) => __awaiter(void 0, void 0, void 0, func
 exports.fileConverter = fileConverter;
 const encryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const password = "OkayCkinka@2021";
+        const { password } = req.body;
         if (password !== null) {
             const fileupload = req.file;
             const filename = fileupload.filename;
@@ -620,6 +620,38 @@ const decryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.decryptFile = decryptFile;
+const generatePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let length = req.params.length;
+        const passwordGenerate = (0, useHook_1.generateUsersPassword)(Number(length));
+        const hasGenerated = yield client_1.default.generatePassword.findMany({
+            where: {
+                password: passwordGenerate
+            }
+        });
+        if (hasGenerated.length > 0) {
+            const passwordNewPassword = (0, useHook_1.generateUsersPassword)(Number(length));
+            client_1.default.generatePassword.create({
+                data: {
+                    password: passwordNewPassword
+                }
+            });
+            res.json({ response: passwordNewPassword, message: "password already exist but new user password is generated" });
+        }
+        else {
+            client_1.default.generatePassword.create({
+                data: {
+                    password: passwordGenerate
+                }
+            });
+            res.json({ response: passwordGenerate, message: "password generated" });
+        }
+    }
+    catch (err) {
+        res.json({ message: "server error occured", status: false, error: err });
+    }
+});
+exports.generatePassword = generatePassword;
 // Password Requirements:
 // 1. Must contain at least 8 characters
 // 2. Must contain at least 1 special character

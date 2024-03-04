@@ -139,3 +139,12 @@ export const searchFileInFolder = (folderPath:string , fileName:string) =>{
 
 export const getFileFromPath = (path:string)=> path.split('/')[path.length-1];
 
+export const generateUsersPassword = (length:number)=>{
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]<>?";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        password += charset[randomIndex];
+    }
+    return password;
+}

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFileFromPath = exports.searchFileInFolder = exports.removeFile = exports.getDecryptFile = exports.getEncryptFile = exports.getFileName = exports.getFolderPath = exports.getAbsolutePath = exports.getChatNotifier = exports.verifyUserAuth = exports.usersAuth = exports.hashPass = exports.generateSalt = void 0;
+exports.generateUsersPassword = exports.getFileFromPath = exports.searchFileInFolder = exports.removeFile = exports.getDecryptFile = exports.getEncryptFile = exports.getFileName = exports.getFolderPath = exports.getAbsolutePath = exports.getChatNotifier = exports.verifyUserAuth = exports.usersAuth = exports.hashPass = exports.generateSalt = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../config");
@@ -111,3 +111,13 @@ const searchFileInFolder = (folderPath, fileName) => {
 exports.searchFileInFolder = searchFileInFolder;
 const getFileFromPath = (path) => path.split('/')[path.length - 1];
 exports.getFileFromPath = getFileFromPath;
+const generateUsersPassword = (length) => {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]<>?";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        password += charset[randomIndex];
+    }
+    return password;
+};
+exports.generateUsersPassword = generateUsersPassword;

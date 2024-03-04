@@ -13,6 +13,7 @@ config();
 
 import {
   generateSalt,
+  generateUsersPassword,
   getAbsolutePath,
   getChatNotifier,
   getDecryptFile,
@@ -744,6 +745,50 @@ export const decryptFile = async (
     res.json({ message: "server error occured", status: false, error: err });
   }
 };
+
+
+
+export const generatePassword = async(
+  req:Request,
+  res:Response,
+  next:NextFunction
+)=>{
+try{
+  let length = req.params.length ; 
+    const passwordGenerate = generateUsersPassword(Number(length))
+    const hasGenerated = await prisma.generatePassword.findMany({
+      where:{
+        password:passwordGenerate
+      }
+    })
+    if(hasGenerated.length  > 0){
+     const passwordNewPassword = generateUsersPassword(Number(length))
+     prisma.generatePassword.create(
+      {
+        data:{
+          password:passwordNewPassword
+         }
+       })
+
+      res.json({response: passwordNewPassword, message:"password already exist but new user password is generated"})
+    }else{
+
+      prisma.generatePassword.create(
+        {
+          data:{
+            password:passwordGenerate
+           }
+         })
+
+         res.json({response: passwordGenerate, message:"password generated"})
+    }
+}catch(err){
+  res.json({ message: "server error occured", status: false, error: err });
+}
+
+
+}
+
 
 // Password Requirements:
 // 1. Must contain at least 8 characters
