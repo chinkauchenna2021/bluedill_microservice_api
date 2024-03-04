@@ -667,7 +667,9 @@ export const encryptFile = async (
   next: NextFunction
 ) => {
   try {
-    const {password }=  req.body;
+    // const password = "mz2@P3+D*%?{9CPY!ibyk?wrtmopK}";
+    const { password } = req.body;
+
     if (password !== null) {
       const fileupload = req.file as unknown as Express.Multer.File;
       const filename = fileupload.filename as string;
@@ -681,12 +683,26 @@ export const encryptFile = async (
       const cryptifyResponse = new Cryptify(fileLink, password);
       cryptifyResponse
         .encrypt()
-        .then((files) => {
+        .then(async (files) => {
           /* Do stuff */
           if (files == undefined) return;
           fs.writeFile(outputPath, files[0]);
+
+          const encryptionData =   await prisma.docsEncryption.create({
+              data:{
+                  decryptionLink:fileLink,
+                  encryptionLink:outputPath,
+                  encryptionPassword:password,
+              },
+              select:{
+                decryptionLink:true,
+                encryptionPassword:true
+              }
+            })
+
+
           res.json({
-            response: outputPath,
+            response: encryptionData,
             status: true,
             password: password,
             message: "file successfully encrypted",
@@ -718,35 +734,32 @@ export const decryptFile = async (
       decryptFileName
     );
 
-    let fileName = getFileName(decryptFileName);
-    let ext = path.extname(decryptFileName);
-    let fileNameWithoutEncode = fileName.split("-").splice(1, 3).join("-");
+     const decryptionData =  await prisma.docsEncryption.findFirst({
+        where:{
+          encryptionLink:fileLink
+        },
+        select:{
+          decryptionLink:true,
+          encryptionPassword:true,
+        }
+       })
 
-    const getFolderPaths = getFolderPath(
-      "../..",
-      "src",
-      "encrypt/encryptOutput"
-    );
+      if(decryptionData?.encryptionPassword != password){
+         res.json({message:"password is not correct " , status:false})
+      }
+    
 
-    const parentFolder = getFolderPath("../..","src","encrypt");
-    const folderFiles = await fs.readdir(getFolderPaths);
-    const isFileFound = folderFiles.includes(decryptFileName);
+      if((decryptionData?.encryptionPassword == password) && (decryptionData?.decryptionLink != undefined)){
+        res.json({response:decryptionData, message:"decryption successfull" , status :true});
+      }
+      if(decryptionData?.decryptionLink == undefined){
+        res.json({ message:"encryption Link not available " , status :false});
+      }
 
-    const realFileName = fileNameWithoutEncode+ext;
-    const parentRoot = await  fs.readdir(parentFolder);
-    const parentRootCollection =  parentRoot.filter((file)=>file == realFileName)[0]
-    if (isFileFound) {
-      const outputPath = getAbsolutePath("../..", "src", "encrypt", parentRootCollection);
-         res.json({response:outputPath, message:"decryption successfull" , status :true});
-    } else {
-      res.json({ message: "decrypting file does not exist ", status: true });
-    }
   } catch (err) {
     res.json({ message: "server error occured", status: false, error: err });
   }
 };
-
-
 
 export const generatePassword = async(
   req:Request,
@@ -788,10 +801,3 @@ try{
 
 
 }
-
-
-// Password Requirements:
-// 1. Must contain at least 8 characters
-// 2. Must contain at least 1 special character
-// 3. Must contain at least 1 numeric character
-// 4. Must contain a combination of uppercase and lowercase

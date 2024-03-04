@@ -561,7 +561,7 @@ const fileConverter = (req, res, next) => __awaiter(void 0, void 0, void 0, func
 exports.fileConverter = fileConverter;
 const encryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { password } = req.body;
+        const password = "mz2@P3+D*%?{9CPY!ibyk?wrtmopK}";
         if (password !== null) {
             const fileupload = req.file;
             const filename = fileupload.filename;

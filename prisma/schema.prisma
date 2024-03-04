@@ -54,7 +54,7 @@ model Document {
   templateType   String
   isEncrypted    Boolean          @default(false)
   securityCode   String?
-  docsEncryption DocsEncryption[]
+  // docsEncryption DocsEncryption[]
   docformat      String           @default("lexical")
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -62,14 +62,15 @@ model Document {
 
 model DocsEncryption {
   id                 String   @id @default(uuid())
+  decryptionLink     String
   encryptionLink     String
   encryptionPassword String
-  document           Document @relation(fields: [encryptId], references: [id])
-  encryptId          String
+  // document           Document @relation(fields: [encryptId], references: [id])
+  encryptDocsId      String @default(uuid())
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  @@index([encryptId])
+  @@index([encryptDocsId])
 }
 
 model Chat {
