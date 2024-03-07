@@ -351,7 +351,8 @@ export const addCollaborators = async (
   
      if((hasApprovedCollaborators.length < MAX_COLLABORATORS)){
       if(findCollaborator.length > 0){
-          res.json({message:"user is already a collaborator"})
+          res.json({collaboratingDocs: isCollaboratorsAvailable,
+            collaborator:findCollaborator,message:"user is already a collaborator"})
           return;
       }
        

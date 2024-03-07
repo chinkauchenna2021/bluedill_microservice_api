@@ -281,7 +281,8 @@ const addCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             const findCollaborator = hasApprovedCollaborators.filter((collabData, index) => ((collabData === null || collabData === void 0 ? void 0 : collabData.collaboratorEmail) == collabUsersEmail));
             if ((hasApprovedCollaborators.length < MAX_COLLABORATORS)) {
                 if (findCollaborator.length > 0) {
-                    res.json({ message: "user is already a collaborator" });
+                    res.json({ collaboratingDocs: isCollaboratorsAvailable,
+                        collaborator: findCollaborator, message: "user is already a collaborator" });
                     return;
                 }
                 const joinCollaborators = yield ((_m = client_1.default === null || client_1.default === void 0 ? void 0 : client_1.default.collaborator) === null || _m === void 0 ? void 0 : _m.create({

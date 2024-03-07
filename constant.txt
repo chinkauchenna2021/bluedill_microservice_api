@@ -10,9 +10,15 @@
 
 
 {
-  "email":"uchennachinka2021@gmail.com",
-  "firstname":"uchenna",
-  "lastname":"chinka",
-  "password":"opengate2023",
-  "company":"mikemedia"
+  "response": "Document Collaboration created",
+  "status": true,
+  "message": {
+    "id": "793b3251-3123-48d2-b9dc-bd3556582ed3",
+    "docid": "303323",
+    "docname": "bluedile contract ",
+    "roomId": "f9ed81db-f90a-42d4-b7e4-d554d8f338fd",
+    "requestingSignature": false,
+    "createdAt": "2024-03-07T12:11:57.443Z",
+    "updatedAt": "2024-03-07T12:11:57.443Z"
+  }
 }
