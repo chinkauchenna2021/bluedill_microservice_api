@@ -17,8 +17,6 @@ const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const useHook_1 = require("../utilities/useHook");
 const client_1 = __importDefault(require("../model/prismaClient/client"));
-// import { convertWordFiles } from 'convert-multiple-files';
-const path_1 = __importDefault(require("path"));
 const promises_1 = __importDefault(require("fs/promises"));
 const convertapi_1 = __importDefault(require("convertapi"));
 const convertapi = new convertapi_1.default("r0ps82oFwtrDLyGO", {
@@ -232,7 +230,6 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
 exports.usersChat = usersChat;
 const createCollaboration = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { docId, docName, roomId } = req.body;
-    console.log(req.body);
     try {
         const collab = yield client_1.default.collaborateDocs.findFirst({
             where: {
@@ -268,50 +265,53 @@ const createCollaboration = (req, res) => __awaiter(void 0, void 0, void 0, func
 });
 exports.createCollaboration = createCollaboration;
 const addCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _m;
     try {
         // add collaborators
         const { roomId, collabUsersEmail } = req.body;
         const isCollaboratorsAvailable = yield client_1.default.collaborateDocs.findFirst({
-            where: { roomId: roomId },
-            select: {
-                collaborator: {
-                    select: {
-                        userId: true,
-                    },
-                },
-            },
+            where: { roomId: roomId }
         });
-        if (isCollaboratorsAvailable &&
-            isCollaboratorsAvailable.collaborator.length <= 0) {
-            const mainDoc = yield client_1.default.collaborateDocs.findFirst({
+        if ((isCollaboratorsAvailable === null || isCollaboratorsAvailable === void 0 ? void 0 : isCollaboratorsAvailable.id) != undefined) {
+            const hasApprovedCollaborators = yield client_1.default.collaborator.findMany({
                 where: {
-                    roomId: roomId,
-                },
+                    collabId: isCollaboratorsAvailable === null || isCollaboratorsAvailable === void 0 ? void 0 : isCollaboratorsAvailable.id
+                }
             });
-            if (mainDoc) {
-                const joinCollaborators = yield client_1.default.collaborator.create({
+            const findCollaborator = hasApprovedCollaborators.filter((collabData, index) => ((collabData === null || collabData === void 0 ? void 0 : collabData.collaboratorEmail) == collabUsersEmail));
+            if ((hasApprovedCollaborators.length < MAX_COLLABORATORS)) {
+                if (findCollaborator.length > 0) {
+                    res.json({ message: "user is already a collaborator" });
+                    return;
+                }
+                const joinCollaborators = yield ((_m = client_1.default === null || client_1.default === void 0 ? void 0 : client_1.default.collaborator) === null || _m === void 0 ? void 0 : _m.create({
                     data: {
-                        userId: mainDoc === null || mainDoc === void 0 ? void 0 : mainDoc.id,
-                        collaboratorEmail: collabUsersEmail,
+                        collaboratorEmail: String(collabUsersEmail),
                         isSigned: false,
+                        collabId: isCollaboratorsAvailable === null || isCollaboratorsAvailable === void 0 ? void 0 : isCollaboratorsAvailable.id,
                     },
-                });
+                }));
                 res.json({
-                    collaboratingDocsDetails: mainDoc,
-                    collaboratordetails: joinCollaborators,
+                    collaboratingDocs: isCollaboratorsAvailable,
+                    collaborator: joinCollaborators,
+                    previousCollaborators: hasApprovedCollaborators,
                     status: true,
                     message: "User is added to Doc Collaboration",
                 });
             }
             else {
                 res.json({
-                    collaboratingDocsDetails: mainDoc,
-                    message: "No such Document to collaborate.",
+                    collaboratingDocs: isCollaboratorsAvailable,
+                    previousCollaborators: hasApprovedCollaborators,
+                    status: true,
+                    message: `Collaboration for this document ${isCollaboratorsAvailable.id} has reached maximum`,
                 });
             }
         }
         else {
-            res.json({ response: "User is already a collaborator.", status: false });
+            res.json({
+                message: "No such Document to collaborate.",
+            });
         }
     }
     catch (err) {
@@ -322,17 +322,20 @@ exports.addCollaborators = addCollaborators;
 const getCollaboratorDocs = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { roomId } = req.body;
-        const collabDocs = yield client_1.default.collaborateDocs.findMany({
+        const collabDocs = yield client_1.default.collaborateDocs.findFirst({
             where: {
                 roomId: roomId,
             },
-            include: {
-                collaborator: true,
-            },
         });
-        if (!(collabDocs.length <= 0)) {
+        if ((collabDocs === null || collabDocs === void 0 ? void 0 : collabDocs.id) != undefined) {
+            const documentCollaborators = yield client_1.default.collaborator.findMany({
+                where: {
+                    collabId: collabDocs.id
+                }
+            });
             res.json({
-                response: collabDocs,
+                collaboratingDocuments: collabDocs,
+                collaborators: documentCollaborators,
                 status: true,
                 message: "Collaboration Document found",
             });
@@ -382,7 +385,7 @@ const getChatMessage = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             });
         }
     }
-    catch (_m) {
+    catch (_o) {
         res.json({ response: "server issue occured", status: false });
     }
 });
@@ -409,7 +412,7 @@ const userLoginByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             res.json({ response: "user not found ", status: false });
         }
     }
-    catch (_o) {
+    catch (_p) {
         res.json({ response: "error occured", status: false });
     }
 });
@@ -435,7 +438,7 @@ const getChatNotification = (req, res, next) => __awaiter(void 0, void 0, void 0
             });
         }
     }
-    catch (_p) {
+    catch (_q) {
         res.json({ response: "server issue occured", status: false });
     }
 });
@@ -465,7 +468,7 @@ const updateChatNotification = (req, res, next) => __awaiter(void 0, void 0, voi
             });
         }
     }
-    catch (_q) {
+    catch (_r) {
         res.json({ response: "server issue occured", status: false });
     }
 });
@@ -561,7 +564,8 @@ const fileConverter = (req, res, next) => __awaiter(void 0, void 0, void 0, func
 exports.fileConverter = fileConverter;
 const encryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const password = "mz2@P3+D*%?{9CPY!ibyk?wrtmopK}";
+        // const password = "mz2@P3+D*%?{9CPY!ibyk?wrtmopK}";
+        const { password } = req.body;
         if (password !== null) {
             const fileupload = req.file;
             const filename = fileupload.filename;
@@ -570,18 +574,29 @@ const encryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
             const cryptifyResponse = new cryptify_1.default(fileLink, password);
             cryptifyResponse
                 .encrypt()
-                .then((files) => {
+                .then((files) => __awaiter(void 0, void 0, void 0, function* () {
                 /* Do stuff */
                 if (files == undefined)
                     return;
                 promises_1.default.writeFile(outputPath, files[0]);
+                const encryptionData = yield client_1.default.docsEncryption.create({
+                    data: {
+                        decryptionLink: fileLink,
+                        encryptionLink: outputPath,
+                        encryptionPassword: password,
+                    },
+                    select: {
+                        decryptionLink: true,
+                        encryptionPassword: true
+                    }
+                });
                 res.json({
-                    response: outputPath,
+                    response: encryptionData,
                     status: true,
                     password: password,
                     message: "file successfully encrypted",
                 });
-            })
+            }))
                 .catch((e) => res.json({ response: e, status: false, message: "encryption failed" }));
         }
         else {
@@ -597,22 +612,23 @@ const decryptFile = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
     try {
         const { decryptFileName, password } = req.body;
         const fileLink = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt/encryptOutput", decryptFileName);
-        let fileName = (0, useHook_1.getFileName)(decryptFileName);
-        let ext = path_1.default.extname(decryptFileName);
-        let fileNameWithoutEncode = fileName.split("-").splice(1, 3).join("-");
-        const getFolderPaths = (0, useHook_1.getFolderPath)("../..", "src", "encrypt/encryptOutput");
-        const parentFolder = (0, useHook_1.getFolderPath)("../..", "src", "encrypt");
-        const folderFiles = yield promises_1.default.readdir(getFolderPaths);
-        const isFileFound = folderFiles.includes(decryptFileName);
-        const realFileName = fileNameWithoutEncode + ext;
-        const parentRoot = yield promises_1.default.readdir(parentFolder);
-        const parentRootCollection = parentRoot.filter((file) => file == realFileName)[0];
-        if (isFileFound) {
-            const outputPath = (0, useHook_1.getAbsolutePath)("../..", "src", "encrypt", parentRootCollection);
-            res.json({ response: outputPath, message: "decryption successfull", status: true });
+        const decryptionData = yield client_1.default.docsEncryption.findFirst({
+            where: {
+                encryptionLink: fileLink
+            },
+            select: {
+                decryptionLink: true,
+                encryptionPassword: true,
+            }
+        });
+        if ((decryptionData === null || decryptionData === void 0 ? void 0 : decryptionData.encryptionPassword) != password) {
+            res.json({ message: "password is not correct ", status: false });
         }
-        else {
-            res.json({ message: "decrypting file does not exist ", status: true });
+        if (((decryptionData === null || decryptionData === void 0 ? void 0 : decryptionData.encryptionPassword) == password) && ((decryptionData === null || decryptionData === void 0 ? void 0 : decryptionData.decryptionLink) != undefined)) {
+            res.json({ response: decryptionData, message: "decryption successfull", status: true });
+        }
+        if ((decryptionData === null || decryptionData === void 0 ? void 0 : decryptionData.decryptionLink) == undefined) {
+            res.json({ message: "encryption Link not available ", status: false });
         }
     }
     catch (err) {
@@ -652,8 +668,3 @@ const generatePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.generatePassword = generatePassword;
-// Password Requirements:
-// 1. Must contain at least 8 characters
-// 2. Must contain at least 1 special character
-// 3. Must contain at least 1 numeric character
-// 4. Must contain a combination of uppercase and lowercase

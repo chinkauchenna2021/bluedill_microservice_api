@@ -55,6 +55,17 @@ export const homePage = (req: Request, res: Response) => {
 
 const MAX_COLLABORATORS = 5;
 
+interface ICollaborators{
+      id: string;
+    collabId: string;
+    collaboratorEmail: string;
+    isSigned: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+
+
 export const userOnboarding = async (req: Request, res: Response) => {
   try {
     const { email, firstname, lastname, password, company } = <IRegistration>(
@@ -277,7 +288,6 @@ export const usersChat = async (
 export const createCollaboration = async (req: Request, res: Response) => {
   const { docId, docName, roomId } = req.body;
 
-  console.log(req.body);
   try {
     const collab = await prisma.collaborateDocs.findFirst({
       where: {
@@ -323,49 +333,58 @@ export const addCollaborators = async (
     const { roomId, collabUsersEmail } = req.body;
 
     const isCollaboratorsAvailable = await prisma.collaborateDocs.findFirst({
-      where: { roomId: roomId },
-      select: {
-        collaborator: {
-          select: {
-            userId: true,
-          },
-        },
-      },
+      where: { roomId: roomId }
     });
 
     if (
-      isCollaboratorsAvailable &&
-      isCollaboratorsAvailable.collaborator.length <= 0
+      isCollaboratorsAvailable?.id != undefined
     ) {
-      const mainDoc = await prisma.collaborateDocs.findFirst({
-        where: {
-          roomId: roomId,
-        },
+
+    const hasApprovedCollaborators = await prisma.collaborator.findMany({
+      where:{
+          collabId: (isCollaboratorsAvailable?.id as string)
+      }
+
+    })
+  
+    const findCollaborator = hasApprovedCollaborators.filter((collabData:ICollaborators , index:number)=>(collabData?.collaboratorEmail == collabUsersEmail))
+  
+     if((hasApprovedCollaborators.length < MAX_COLLABORATORS)){
+      if(findCollaborator.length > 0){
+          res.json({message:"user is already a collaborator"})
+          return;
+      }
+       
+       const joinCollaborators = await prisma?.collaborator?.create({
+         data: {
+           collaboratorEmail: String(collabUsersEmail),
+           isSigned: false as boolean,
+           collabId: isCollaboratorsAvailable?.id as string,
+         },
+       });
+       res.json({
+         collaboratingDocs: isCollaboratorsAvailable,
+         collaborator: joinCollaborators,
+         previousCollaborators:hasApprovedCollaborators,
+         status: true,
+         message: "User is added to Doc Collaboration",
+       });
+     }else{
+      res.json({
+        collaboratingDocs: isCollaboratorsAvailable,
+        previousCollaborators:hasApprovedCollaborators,
+        status: true,
+        message: `Collaboration for this document ${isCollaboratorsAvailable.id} has reached maximum`,
       });
 
-      if (mainDoc) {
-        const joinCollaborators = await prisma.collaborator.create({
-          data: {
-            userId: mainDoc?.id,
-            collaboratorEmail: collabUsersEmail,
-            isSigned: false,
-          },
-        });
-        res.json({
-          collaboratingDocsDetails: mainDoc,
-          collaboratordetails: joinCollaborators,
-          status: true,
-          message: "User is added to Doc Collaboration",
-        });
+     }
+
       } else {
         res.json({
-          collaboratingDocsDetails: mainDoc,
           message: "No such Document to collaborate.",
         });
       }
-    } else {
-      res.json({ response: "User is already a collaborator.", status: false });
-    }
+
   } catch (err) {
     res.json({ response: "server Error occured", status: false, error: err });
   }
@@ -379,17 +398,21 @@ export const getCollaboratorDocs = async (
   try {
     const { roomId } = req.body;
 
-    const collabDocs = await prisma.collaborateDocs.findMany({
+    const collabDocs = await prisma.collaborateDocs.findFirst({
       where: {
         roomId: roomId,
       },
-      include: {
-        collaborator: true,
-      },
     });
-    if (!(collabDocs.length <= 0)) {
+    if (collabDocs?.id != undefined) {
+     const documentCollaborators = await prisma.collaborator.findMany({
+      where:{
+        collabId: (collabDocs.id as string)
+      }
+     })
+
       res.json({
-        response: collabDocs,
+        collaboratingDocuments: collabDocs,
+        collaborators: documentCollaborators,
         status: true,
         message: "Collaboration Document found",
       });

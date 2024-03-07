@@ -35,14 +35,14 @@ model CollaborateDocs {
 
 model Collaborator {
   id                 String          @id @default(uuid())
-  collaboratingUsers CollaborateDocs @relation(fields: [userId], references: [id])
-  userId             String
+  collaboratingUsers CollaborateDocs @relation(fields: [collabId], references: [id])
+  collabId             String
   collaboratorEmail  String
   isSigned           Boolean
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
-  @@index([userId])
+  @@index([collabId])
 }
 
 model Document {
