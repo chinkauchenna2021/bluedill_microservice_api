@@ -1,5 +1,5 @@
 import { Request , Response , NextFunction } from 'express';
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { IRegistration , IChatNotifier } from '../dto/usersRegistration.dto';
 import { AUTH_SECRET_KEY } from '../config';
@@ -11,8 +11,10 @@ import crypto from 'crypto'
 
 
 
+
 export const generateSalt = async()=>{
    return  await bcrypt.genSalt();
+   
 }
 export const hashPass = async (password:string , salt:string) =>{
     return  await bcrypt.hash(password , salt)

@@ -38,7 +38,7 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
             where: { email: email },
         }));
         if (isUserExist) {
-            res.json({ message: "user already exist", status: false });
+            return res.json({ message: "user already exist", status: false });
         }
         const userReponse = yield ((_b = client_1.default.user) === null || _b === void 0 ? void 0 : _b.create({
             data: {
@@ -52,15 +52,14 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
             },
         }));
         if (userReponse.id != undefined) {
-            res.json({
+            return res.json({
                 message: "registration was successful",
-                status: true,
-                response: userReponse,
+                status: true
             });
         }
     }
     catch (_c) {
-        res.json({ message: "error occured" });
+        return res.json({ message: "Error occure", status: false });
     }
 });
 exports.userOnboarding = userOnboarding;
@@ -74,6 +73,7 @@ const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                 password: password,
             },
         });
+        console.log(usersLoginResponse);
         if (usersLoginResponse) {
             const tokenAuth = yield (0, useHook_1.usersAuth)(usersLoginResponse);
             if (tokenAuth) {
@@ -81,6 +81,7 @@ const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                     authToken: tokenAuth,
                     status: true,
                     response: usersLoginResponse,
+                    statusMessage: "Login Successfull"
                 });
             }
         }

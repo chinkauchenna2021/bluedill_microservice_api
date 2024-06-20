@@ -67,19 +67,21 @@ interface ICollaborators{
 
 
 export const userOnboarding = async (req: Request, res: Response) => {
+  
   try {
     const { email, firstname, lastname, password, company } = <IRegistration>(
       req.body
     );
     const salt = await generateSalt();
-    const hashpassword = await hashPass(password, salt);
+    const hashpassword = await hashPass(password, salt);   
 
     const isUserExist = await prisma.user?.findFirst({
       where: { email: email },
     });
 
+
     if (isUserExist) {
-      res.json({ message: "user already exist", status: false });
+       return res.json({ message: "user already exist", status: false });
     }
 
     const userReponse = await prisma.user?.create({
@@ -95,14 +97,13 @@ export const userOnboarding = async (req: Request, res: Response) => {
     });
 
     if (userReponse.id != undefined) {
-      res.json({
+      return res.json({
         message: "registration was successful",
-        status: true,
-        response: userReponse,
+        status: true
       });
     }
   } catch {
-    res.json({ message: "error occured" });
+    return res.json({ message: "Error occure",status: false  });
   }
 };
 
@@ -114,12 +115,15 @@ export const userLogin = async (
   // const auth = req.get("Authorization");
   try {
     const { email, password } = <ILogin>req.body;
+    
+    
     const usersLoginResponse = await prisma.user.findFirst({
       where: {
         email: email,
         password: password,
       },
     });
+    console.log(usersLoginResponse);
 
     if (usersLoginResponse) {
       const tokenAuth = await usersAuth(usersLoginResponse as IRegistration);
@@ -128,6 +132,7 @@ export const userLogin = async (
           authToken: tokenAuth,
           status: true,
           response: usersLoginResponse,
+          statusMessage:"Login Successfull"
         });
       }
     } else {
