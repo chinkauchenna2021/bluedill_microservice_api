@@ -1,16 +1,12 @@
 import nodemailer from "nodemailer";
-// import {config} from 'dotenv';
-// config();
-// const yourEmail = "yourEmail@gmail.com";
-// const yourPass = "yourEmailPasswrd";
-// const mailHost = "smpt.gmail.com";
-// const mailPort = 587;
-// const senderEmail = "senderEmail@gmail.com"
+import {config} from 'dotenv';
+config();
 
-const companyEmail= "";
-const companyPassword = "";
-const mailPort = 0;
-const mailHost = "";
+const companyEmail = process.env.COMPANY_EMAIL;
+const companyUser = process.env.EMAIL_USER;
+const companyPassword = process.env.EMAIL_PASSWORD;
+const mailPort = process.env.EMAIL_PORT;
+const mailHost = process.env.MAIL_HOST;
 
 /**
  * Send mail
@@ -23,9 +19,9 @@ export  async function sendMailWithNodeMailer(to:string, subject:string , htmlCo
   let transporter = nodemailer.createTransport({
     host: mailHost,
     port: mailPort,
-    secure: false, // use SSL - TLS
+    secure: 'SSL', // use SSL - TLS
     auth: {
-      user: companyEmail,
+      user: companyUser,
       pass: companyPassword,
     },
   });

@@ -38,7 +38,7 @@ export const verifyUserAuth = async (req:Request)=>{
 
 
 export const getChatNotifier = async (usersChatData: IChatNotifier[]) =>{
-    return usersChatData.filter((usersChat:IChatNotifier)=>usersChat?.isReceivedStatus == false)
+    return usersChatData.filter((usersChat:IChatNotifier)=>usersChat?.isReceivedStatus == true)
 }
 
 

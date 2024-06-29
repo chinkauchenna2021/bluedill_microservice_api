@@ -6,22 +6,31 @@ export interface IRegistration {
   password: string;
   company: string;
   salt?: string
-  hashpassword?: string 
+  hashpassword?: string
+}
+
+export interface INotification {
+  id?: string;
+  user: string;
+  title: string;
+  userMessage: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 
-export interface ILogin{
-  email:string 
-  password:string ;
+export interface ILogin {
+  email: string
+  password: string;
 }
 
 
-export  interface IUsersChat {
-     id:string ,
-     sendersEmail:string,
-     receiversemail:string
-     message:string;
-     isReceivedStatus:boolean
+export interface IUsersChat {
+  id: string,
+  sendersEmail: string,
+  receiversemail: string
+  message: string;
+  isReceivedStatus: boolean
 
 }
 
@@ -35,36 +44,36 @@ export  interface IUsersChat {
 // userId String 
 
 
-export interface ICollaboration{
-  id?:string 
-  collabNumber?:number 
-  docid?: string 
-  docname?: string 
+export interface ICollaboration {
+  id?: string
+  collabNumber?: number
+  docid?: string
+  docname?: string
   roomId: string
-  collabUsersEmail? : string[]
+  collabUsersEmail?: string[]
 }
 
 
 
 
-export interface IDocument{
- docid:string ,
- docname:string,
- templateType:string 
+export interface IDocument {
+  docid: string,
+  docname: string,
+  templateType: string
 }
 
 
 
 export interface IChatNotifier {
-    id: string;
-    userEmail: string;
-    userMessage: string;
-    senderUserId: string;
-    receiverUserId: string;
-    isReceivedStatus: boolean;
-    userId: string;
-    createdAt: Date;
-    updatedAt: Date;
+  id: string;
+  userEmail: string;
+  userMessage: string;
+  senderUserId: string;
+  receiverUserId: string;
+  isReceivedStatus: boolean;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type IDocUpdate = {

@@ -9,9 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -41,8 +40,8 @@ model CollaborateDocs {
 
 model Collaborator {
   id                 String          @id @default(uuid())
+  collabId           String
   collaboratingUsers CollaborateDocs @relation(fields: [collabId], references: [id])
-  collabId             String
   collaboratorEmail  String
   isSigned           Boolean
   createdAt          DateTime        @default(now())
@@ -52,18 +51,17 @@ model Collaborator {
 }
 
 model Document {
-  id             String           @id @default(uuid())
-  docid          String           @unique
+  id             String   @id @default(uuid())
+  docid          String   @unique
   docname        String
   doclink        String
   userUpdateDoc  String
   templateType   String
-  isEncrypted    Boolean          @default(false)
+  isEncrypted    Boolean  @default(false)
   securityCode   String?
-  // docsEncryption DocsEncryption[]
-  docformat      String           @default("lexical")
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  docformat      String   @default("lexical")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model DocsEncryption {
@@ -71,12 +69,21 @@ model DocsEncryption {
   decryptionLink     String
   encryptionLink     String
   encryptionPassword String
-  // document           Document @relation(fields: [encryptId], references: [id])
-  encryptDocsId      String @default(uuid())
+  encryptDocsId      String   @default(uuid())
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
   @@index([encryptDocsId])
+}
+
+model Notification {
+  id           String   @id @default(uuid())
+  user         String
+  title        String    
+  userMessage  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  isRead      Boolean  @default(false)
 }
 
 model Chat {
@@ -94,12 +101,16 @@ model Chat {
   @@index([userId])
 }
 
-
-
-model generatePassword{
-    id String @id @default(uuid())
-    password String
-    createdAt        DateTime @default(now())
-    updatedAt        DateTime @updatedAt
+model generatePassword {
+  id        String   @id @default(uuid())
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
+enum Title {
+  ContractHasBeenApproved
+  LoginSuccessful
+  DeleteAccount
+  AccountDisable
+}

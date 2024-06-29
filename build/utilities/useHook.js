@@ -42,7 +42,7 @@ const verifyUserAuth = (req) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.verifyUserAuth = verifyUserAuth;
 const getChatNotifier = (usersChatData) => __awaiter(void 0, void 0, void 0, function* () {
-    return usersChatData.filter((usersChat) => (usersChat === null || usersChat === void 0 ? void 0 : usersChat.isReceivedStatus) == false);
+    return usersChatData.filter((usersChat) => (usersChat === null || usersChat === void 0 ? void 0 : usersChat.isReceivedStatus) == true);
 });
 exports.getChatNotifier = getChatNotifier;
 const getAbsolutePath = (LinkPathDots, parentFolder, folderName, fileName) => {

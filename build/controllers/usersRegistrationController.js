@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePassword = exports.decryptFile = exports.encryptFile = exports.fileConverter = exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getChatNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
+exports.generatePassword = exports.decryptFile = exports.encryptFile = exports.fileConverter = exports.getAllDocument = exports.updateDocument = exports.updateChatNotification = exports.getUserdetails = exports.updateUserNotification = exports.getChatNotification = exports.getNotification = exports.userLoginByEmail = exports.getChatMessage = exports.getCollaboratorDocs = exports.addCollaborators = exports.createCollaboration = exports.usersChat = exports.getAllTemplates = exports.adminUploadTemplates = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.userOnboarding = exports.homePage = void 0;
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const useHook_1 = require("../utilities/useHook");
@@ -23,24 +23,41 @@ const convertapi = new convertapi_1.default("r0ps82oFwtrDLyGO", {
     conversionTimeout: 60,
 });
 const cryptify_1 = __importDefault(require("cryptify"));
-const homePage = (req, res) => {
-    res.json({ message: "running successfully" });
-};
+const useNodeMailer_1 = require("../utilities/useNodeMailer");
+const homePage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.json({ tile: "Home page", });
+});
 exports.homePage = homePage;
 const MAX_COLLABORATORS = 5;
+const notification = (id, title, userMessage) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const notificationDetail = {
+        user: id,
+        title: title,
+        userMessage: userMessage
+    };
+    const userReponses = yield ((_a = client_1.default.notification) === null || _a === void 0 ? void 0 : _a.create({
+        data: {
+            user: notificationDetail.user,
+            title: notificationDetail.title,
+            userMessage: notificationDetail.userMessage,
+        },
+    }));
+    return userReponses;
+});
 const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _b, _c;
     try {
         const { email, firstname, lastname, password, company } = (req.body);
         const salt = yield (0, useHook_1.generateSalt)();
         const hashpassword = yield (0, useHook_1.hashPass)(password, salt);
-        const isUserExist = yield ((_a = client_1.default.user) === null || _a === void 0 ? void 0 : _a.findFirst({
+        const isUserExist = yield ((_b = client_1.default.user) === null || _b === void 0 ? void 0 : _b.findFirst({
             where: { email: email },
         }));
         if (isUserExist) {
             return res.json({ message: "user already exist", status: false });
         }
-        const userReponse = yield ((_b = client_1.default.user) === null || _b === void 0 ? void 0 : _b.create({
+        const userReponse = yield ((_c = client_1.default.user) === null || _c === void 0 ? void 0 : _c.create({
             data: {
                 email: email,
                 firstname: firstname,
@@ -52,13 +69,20 @@ const userOnboarding = (req, res) => __awaiter(void 0, void 0, void 0, function*
             },
         }));
         if (userReponse.id != undefined) {
-            return res.json({
-                message: "registration was successful",
-                status: true
-            });
+            const notification_details = {
+                title: "Account Successfully Created",
+                message: "Congratulations! Your Bluedill account has been successfully created. Welcome to the Bluedill community!"
+            };
+            let send_notification = yield notification(userReponse.id, notification_details.title, notification_details.message);
+            if (send_notification.id != '') {
+                return res.json({
+                    message: "registration was successful",
+                    status: true
+                });
+            }
         }
     }
-    catch (_c) {
+    catch (_d) {
         return res.json({ message: "Error occure", status: false });
     }
 });
@@ -73,32 +97,38 @@ const userLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                 password: password,
             },
         });
-        console.log(usersLoginResponse);
         if (usersLoginResponse) {
-            const tokenAuth = yield (0, useHook_1.usersAuth)(usersLoginResponse);
-            if (tokenAuth) {
-                res.json({
-                    authToken: tokenAuth,
-                    status: true,
-                    response: usersLoginResponse,
-                    statusMessage: "Login Successfull"
-                });
+            const notification_details = {
+                title: "Login Successful",
+                message: "You have successfully logged into your Bluedill account."
+            };
+            let send_notification = yield notification(usersLoginResponse.id, notification_details.title, notification_details.message);
+            if (send_notification.id != '') {
+                const tokenAuth = yield (0, useHook_1.usersAuth)(usersLoginResponse);
+                if (tokenAuth) {
+                    res.json({
+                        authToken: tokenAuth,
+                        status: true,
+                        response: usersLoginResponse,
+                        statusMessage: "Login Successfull"
+                    });
+                }
             }
         }
         else {
             res.json({ response: "user not found ", status: false });
         }
     }
-    catch (_d) {
+    catch (_e) {
         res.json({ response: "error occured", status: false });
     }
 });
 exports.userLogin = userLogin;
 const userRecoverPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
+    var _f;
     try {
         const { email } = req.body;
-        const usersRecoveryData = yield ((_e = client_1.default.user) === null || _e === void 0 ? void 0 : _e.findFirst({
+        const usersRecoveryData = yield ((_f = client_1.default.user) === null || _f === void 0 ? void 0 : _f.findFirst({
             where: { email: email },
         }));
         if (usersRecoveryData) {
@@ -116,16 +146,16 @@ const userRecoverPassword = (req, res, next) => __awaiter(void 0, void 0, void 0
             });
         }
     }
-    catch (_f) {
+    catch (_g) {
         res.json({ response: "error occured", status: false });
     }
 });
 exports.userRecoverPassword = userRecoverPassword;
 const searchUsersByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g;
+    var _h;
     try {
         const { email } = req.body;
-        const searchUsersData = yield ((_g = client_1.default.user) === null || _g === void 0 ? void 0 : _g.findFirst({
+        const searchUsersData = yield ((_h = client_1.default.user) === null || _h === void 0 ? void 0 : _h.findFirst({
             where: { email: email },
         }));
         if (searchUsersData) {
@@ -143,19 +173,19 @@ const searchUsersByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0,
             });
         }
     }
-    catch (_h) {
+    catch (_j) {
         res.json({ response: "error occured", status: false });
     }
 });
 exports.searchUsersByEmail = searchUsersByEmail;
 const adminUploadTemplates = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _j;
+    var _k;
     try {
         const { docid, docname, templateType } = req.body;
         const { id } = req.user;
         const fileupload = req.file;
         const filename = fileupload.filename;
-        let updateTemplate = yield ((_j = client_1.default.document) === null || _j === void 0 ? void 0 : _j.create({
+        let updateTemplate = yield ((_k = client_1.default.document) === null || _k === void 0 ? void 0 : _k.create({
             data: {
                 docid: docid,
                 docname: docname,
@@ -177,9 +207,9 @@ const adminUploadTemplates = (req, res, next) => __awaiter(void 0, void 0, void 
 });
 exports.adminUploadTemplates = adminUploadTemplates;
 const getAllTemplates = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _k;
+    var _l;
     try {
-        const allDocuments = yield ((_k = client_1.default.document) === null || _k === void 0 ? void 0 : _k.findMany());
+        const allDocuments = yield ((_l = client_1.default.document) === null || _l === void 0 ? void 0 : _l.findMany());
         res.json({ response: allDocuments, status: true });
     }
     catch (err) {
@@ -204,7 +234,7 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
                     userMessage: message,
                     senderUserId: senderData === null || senderData === void 0 ? void 0 : senderData.id,
                     receiverUserId: recieversData === null || recieversData === void 0 ? void 0 : recieversData.id,
-                    isReceivedStatus: true,
+                    isReceivedStatus: false,
                     user: {
                         connect: {
                             id: recieversData === null || recieversData === void 0 ? void 0 : recieversData.id,
@@ -224,7 +254,7 @@ const usersChat = (req, res, nexr) => __awaiter(void 0, void 0, void 0, function
             res.json({ response: "reciever does not exist ", status: false });
         }
     }
-    catch (_l) {
+    catch (_m) {
         res.json({ response: "server issue occured", status: false });
     }
 });
@@ -266,7 +296,7 @@ const createCollaboration = (req, res) => __awaiter(void 0, void 0, void 0, func
 });
 exports.createCollaboration = createCollaboration;
 const addCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _m;
+    var _o;
     try {
         // add collaborators
         const { roomId, collabUsersEmail } = req.body;
@@ -282,23 +312,28 @@ const addCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             const findCollaborator = hasApprovedCollaborators.filter((collabData, index) => ((collabData === null || collabData === void 0 ? void 0 : collabData.collaboratorEmail) == collabUsersEmail));
             if ((hasApprovedCollaborators.length < MAX_COLLABORATORS)) {
                 if (findCollaborator.length > 0) {
-                    res.json({ collaboratingDocs: isCollaboratorsAvailable,
-                        collaborator: findCollaborator, message: "user is already a collaborator" });
+                    res.json({
+                        collaboratingDocs: isCollaboratorsAvailable,
+                        collaborator: findCollaborator, message: "user is already a collaborator"
+                    });
                     return;
                 }
-                const joinCollaborators = yield ((_m = client_1.default === null || client_1.default === void 0 ? void 0 : client_1.default.collaborator) === null || _m === void 0 ? void 0 : _m.create({
+                const joinCollaborators = yield ((_o = client_1.default === null || client_1.default === void 0 ? void 0 : client_1.default.collaborator) === null || _o === void 0 ? void 0 : _o.create({
                     data: {
                         collaboratorEmail: String(collabUsersEmail),
                         isSigned: false,
                         collabId: isCollaboratorsAvailable === null || isCollaboratorsAvailable === void 0 ? void 0 : isCollaboratorsAvailable.id,
                     },
                 }));
+                const subject = "Test Email";
+                const htmlContent = "<h1>This is a test email for Collaborators</h1>";
+                const result = yield (0, useNodeMailer_1.sendMailWithNodeMailer)(collabUsersEmail, subject, htmlContent);
                 res.json({
                     collaboratingDocs: isCollaboratorsAvailable,
                     collaborator: joinCollaborators,
                     previousCollaborators: hasApprovedCollaborators,
                     status: true,
-                    message: "User is added to Doc Collaboration",
+                    message: "User is added to Doc Collaboration and an email has been send to them",
                 });
             }
             else {
@@ -387,7 +422,7 @@ const getChatMessage = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             });
         }
     }
-    catch (_o) {
+    catch (_p) {
         res.json({ response: "server issue occured", status: false });
     }
 });
@@ -414,17 +449,43 @@ const userLoginByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             res.json({ response: "user not found ", status: false });
         }
     }
-    catch (_p) {
+    catch (_q) {
         res.json({ response: "error occured", status: false });
     }
 });
 exports.userLoginByEmail = userLoginByEmail;
+const getNotification = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { receiverUserId } = req.body;
+        const receiverData = yield client_1.default.notification.findMany({
+            where: { user: receiverUserId },
+        });
+        if (receiverData.length != 0) {
+            res.json({
+                response: receiverData,
+                message: "users notification",
+                status: true
+            });
+        }
+        else {
+            res.json({
+                response: [],
+                message: "No Notification for User",
+                status: false
+            });
+        }
+    }
+    catch (err) {
+        console.log(err);
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.getNotification = getNotification;
 const getChatNotification = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { receiverUserId } = req.body;
-    // const { id } = req.user;
     try {
         const receiverData = yield client_1.default.chat.findMany({
-            where: { receiverUserId: receiverUserId, isReceivedStatus: false },
+            where: { receiverUserId: receiverUserId },
         });
         if (receiverData.length != 0) {
             let userNotify = yield (0, useHook_1.getChatNotifier)(receiverData);
@@ -440,11 +501,64 @@ const getChatNotification = (req, res, next) => __awaiter(void 0, void 0, void 0
             });
         }
     }
-    catch (_q) {
+    catch (_r) {
         res.json({ response: "server issue occured", status: false });
     }
 });
 exports.getChatNotification = getChatNotification;
+const updateUserNotification = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { notification_id, user } = req.body;
+    console.log('hh');
+    try {
+        const receiverData = yield client_1.default.notification.update({
+            where: {
+                id: notification_id,
+                user: user
+            },
+            data: {
+                isRead: true,
+            },
+        });
+        if ((receiverData === null || receiverData === void 0 ? void 0 : receiverData.id) != null) {
+            res.json({
+                response: receiverData,
+                message: `Successfully updated user notification to read.`,
+            });
+        }
+        else {
+            res.json({
+                response: false,
+                message: `Failed to update user notification as read`,
+            });
+        }
+    }
+    catch (_s) {
+        res.json({ response: "server issue occured", status: false });
+    }
+});
+exports.updateUserNotification = updateUserNotification;
+const getUserdetails = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _t;
+    const { user } = req.body;
+    const userDetails = yield ((_t = client_1.default.user) === null || _t === void 0 ? void 0 : _t.findFirst({
+        where: { id: user },
+    }));
+    if (userDetails) {
+        res.json({
+            message: "user details",
+            respone: userDetails,
+            status: true,
+        });
+    }
+    else {
+        res.json({
+            message: "user not found",
+            status: false,
+            user: userDetails,
+        });
+    }
+});
+exports.getUserdetails = getUserdetails;
 const updateChatNotification = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { chatId } = req.body;
     // const { id } = req.user;
@@ -470,7 +584,7 @@ const updateChatNotification = (req, res, next) => __awaiter(void 0, void 0, voi
             });
         }
     }
-    catch (_r) {
+    catch (_u) {
         res.json({ response: "server issue occured", status: false });
     }
 });

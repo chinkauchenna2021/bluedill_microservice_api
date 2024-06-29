@@ -8,8 +8,11 @@ import {
   searchUsersByEmail,
   adminUploadTemplates,
   getAllTemplates,
+  getUserdetails,
   usersChat,
   getChatMessage,
+  getNotification,
+  updateUserNotification,
   createCollaboration,
   addCollaborators,
   getCollaboratorDocs,
@@ -83,6 +86,8 @@ router.post("/loginbymail",userLoginByEmail)
 router.post("/useronboarding" , userOnboarding);
 router.post("/passwordrecovery",userRecoverPassword);
 
+router.post("/userdetails",getUserdetails);
+
 // router.use(VerifiedAuthToken);
 router.post('/searchuserbyemail' , searchUsersByEmail);
 router.post("/uploadsingletemplates",upload,adminUploadTemplates);
@@ -92,9 +97,15 @@ router.post("/usersmessages" , getChatMessage)
 // router.post("/getreceiversmessages" , getReceiversMessagesFromSender);
 router.post('/createCollaboration' , createCollaboration);
 router.post("/addCollaborators",addCollaborators)
-router.post("/getNotification" , getChatNotification) 
+// chat 
+router.post("/getChatNotification" , getChatNotification) 
+router.post("updateChatNotification" , updateChatNotification);
+
+router.post("/getNotification" , getNotification)
+router.post("updatUserNotification" , updateUserNotification);
+
 router.post("/getCollabDocsById" ,getCollaboratorDocs)
-router.post("updateNotification" , updateChatNotification);
+
 router.get("/getAllDocs",getAllDocument);
 router.post("/updateDocs",updateDocument);
 // encryptFile
@@ -102,4 +113,15 @@ router.post("/fileconverter",singleFileConvert,fileConverter)
 router.post("/encryptFile",encryptStorage,encryptFile)
 router.post("/decryptFile",decryptFile)
 router.get("/generatePassword/:length", generatePassword);
+
+
+
+
+
+
+
+
+
 export default router ; 
+
+

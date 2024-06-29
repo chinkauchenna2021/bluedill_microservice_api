@@ -14,17 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendMailWithNodeMailer = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
-// import {config} from 'dotenv';
-// config();
-// const yourEmail = "yourEmail@gmail.com";
-// const yourPass = "yourEmailPasswrd";
-// const mailHost = "smpt.gmail.com";
-// const mailPort = 587;
-// const senderEmail = "senderEmail@gmail.com"
-const companyEmail = "";
-const companyPassword = "";
-const mailPort = 0;
-const mailHost = "";
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
+const companyEmail = process.env.COMPANY_EMAIL;
+const companyUser = process.env.EMAIL_USER;
+const companyPassword = process.env.EMAIL_PASSWORD;
+const mailPort = process.env.EMAIL_PORT;
+const mailHost = process.env.MAIL_HOST;
 /**
  * Send mail
  * @param {string} to
@@ -37,9 +33,9 @@ function sendMailWithNodeMailer(to, subject, htmlContent) {
         let transporter = nodemailer_1.default.createTransport({
             host: mailHost,
             port: mailPort,
-            secure: false, // use SSL - TLS
+            secure: 'SSL', // use SSL - TLS
             auth: {
-                user: companyEmail,
+                user: companyUser,
                 pass: companyPassword,
             },
         });

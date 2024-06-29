@@ -49,6 +49,7 @@ router.post("/login", controllers_1.userLogin);
 router.post("/loginbymail", controllers_1.userLoginByEmail);
 router.post("/useronboarding", controllers_1.userOnboarding);
 router.post("/passwordrecovery", controllers_1.userRecoverPassword);
+router.post("/userdetails", controllers_1.getUserdetails);
 // router.use(VerifiedAuthToken);
 router.post('/searchuserbyemail', controllers_1.searchUsersByEmail);
 router.post("/uploadsingletemplates", upload, controllers_1.adminUploadTemplates);
@@ -58,9 +59,12 @@ router.post("/usersmessages", controllers_1.getChatMessage);
 // router.post("/getreceiversmessages" , getReceiversMessagesFromSender);
 router.post('/createCollaboration', controllers_1.createCollaboration);
 router.post("/addCollaborators", controllers_1.addCollaborators);
-router.post("/getNotification", controllers_1.getChatNotification);
+// chat 
+router.post("/getChatNotification", controllers_1.getChatNotification);
+router.post("updateChatNotification", controllers_1.updateChatNotification);
+router.post("/getNotification", controllers_1.getNotification);
+router.post("updatUserNotification", controllers_1.updateUserNotification);
 router.post("/getCollabDocsById", controllers_1.getCollaboratorDocs);
-router.post("updateNotification", controllers_1.updateChatNotification);
 router.get("/getAllDocs", controllers_1.getAllDocument);
 router.post("/updateDocs", controllers_1.updateDocument);
 // encryptFile
