@@ -106,6 +106,49 @@ export const userOnboarding = async (req: Request, res: Response) => {
   }
 };
 
+export const googleOnboarding = async (req: Request, res: Response) => {
+  try {
+    const { email, firstname, lastname, password, company } = <IRegistration>(
+      req.body
+    );
+    const salt = await generateSalt();
+    const hashpassword = await hashPass(password, salt);
+
+    const isUserExist = await prisma.user?.findFirst({
+      where: { email: email },
+    });
+
+    if (isUserExist) {
+      res.json({ message: "user already exist", status: false });
+    }
+
+    const userReponse = await prisma.user?.create({
+      data: {
+        email: email,
+        firstname: firstname,
+        lastname: lastname,
+        password: password,
+        company: company,
+        salt: salt,
+        hashpassword: hashpassword,
+      },
+    });
+
+    if (userReponse.id != undefined) {
+      res.json({
+        message: "registration was successful",
+        status: true,
+        response: userReponse,
+      });
+    }
+  } catch {
+    res.json({ message: "error occured" });
+  }
+};
+
+
+
+
 export const userLogin = async (
   req: Request,
   res: Response,
