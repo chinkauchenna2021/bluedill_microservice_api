@@ -15,6 +15,15 @@ export interface ILogin{
   password:string ;
 }
 
+export interface IPassword{
+  password:string
+}
+
+
+export interface IPassword{
+
+}
+
 
 export  interface IUsersChat {
      id:string ,

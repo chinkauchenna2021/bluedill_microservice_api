@@ -6,6 +6,7 @@ import {
   IUsersChat,
   ICollaboration,
   IDocUpdate,
+  IPassword,
 } from "../dto/usersRegistration.dto";
 
 import { config } from "dotenv";
@@ -40,14 +41,12 @@ import { callbackPromise } from "nodemailer/lib/shared";
 import ConvertAPI from "convertapi";
 import { string } from "zod";
 
-
-
-
 const convertapi = new ConvertAPI("r0ps82oFwtrDLyGO", {
   conversionTimeout: 60,
 });
 
 import Cryptify from "cryptify";
+import { passwordSchema } from "../dto/typeSafeWithZod";
 
 export const homePage = (req: Request, res: Response) => {
   res.json({ message: "running successfully" });
@@ -55,16 +54,14 @@ export const homePage = (req: Request, res: Response) => {
 
 const MAX_COLLABORATORS = 5;
 
-interface ICollaborators{
-      id: string;
-    collabId: string;
-    collaboratorEmail: string;
-    isSigned: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+interface ICollaborators {
+  id: string;
+  collabId: string;
+  collaboratorEmail: string;
+  isSigned: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
-
-
 
 export const userOnboarding = async (req: Request, res: Response) => {
   try {
@@ -146,8 +143,53 @@ export const googleOnboarding = async (req: Request, res: Response) => {
   }
 };
 
+export const updatePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  //USE FOR VALIDATION
 
+  // const result = passwordSchema.safeParse(password);
 
+  // if (!result.success) {
+  //   res.json({message:"Password validation failed:",error:result.error.issues});
+  // } else {
+
+  // }
+
+  try {
+    const { password } = <IPassword>req.body;
+
+    const salt = await generateSalt();
+    const hashpassword = await hashPass(password, salt);
+
+    const isPasswordExist = await prisma.user?.findFirst({
+      where: { password: password },
+    });
+
+    if (!isPasswordExist) {
+      res.json({ message: "User's password not found.", status: false });
+    } else {
+      const updatedUser = await prisma.user.update({
+        where: { id: isPasswordExist.id },
+        data: { password: password, hashpassword: hashpassword },
+      });
+
+      if (updatedUser) {
+        res.json({
+          message: "User's password updated successfully ",
+          status: true,
+        });
+      }
+    }
+  } catch (error) {
+    res.json({
+      message: "Error occured while updating passowrd",
+      status: false,
+    });
+  }
+};
 
 export const userLogin = async (
   req: Request,
@@ -376,59 +418,58 @@ export const addCollaborators = async (
     const { roomId, collabUsersEmail } = req.body;
 
     const isCollaboratorsAvailable = await prisma.collaborateDocs.findFirst({
-      where: { roomId: roomId }
+      where: { roomId: roomId },
     });
 
-    if (
-      isCollaboratorsAvailable?.id != undefined
-    ) {
-
-    const hasApprovedCollaborators = await prisma.collaborator.findMany({
-      where:{
-          collabId: (isCollaboratorsAvailable?.id as string)
-      }
-
-    })
-  
-    const findCollaborator = hasApprovedCollaborators.filter((collabData:ICollaborators , index:number)=>(collabData?.collaboratorEmail == collabUsersEmail))
-  
-     if((hasApprovedCollaborators.length < MAX_COLLABORATORS)){
-      if(findCollaborator.length > 0){
-          res.json({collaboratingDocs: isCollaboratorsAvailable,
-            collaborator:findCollaborator,message:"user is already a collaborator"})
-          return;
-      }
-       
-       const joinCollaborators = await prisma?.collaborator?.create({
-         data: {
-           collaboratorEmail: String(collabUsersEmail),
-           isSigned: false as boolean,
-           collabId: isCollaboratorsAvailable?.id as string,
-         },
-       });
-       res.json({
-         collaboratingDocs: isCollaboratorsAvailable,
-         collaborator: joinCollaborators,
-         previousCollaborators:hasApprovedCollaborators,
-         status: true,
-         message: "User is added to Doc Collaboration",
-       });
-     }else{
-      res.json({
-        collaboratingDocs: isCollaboratorsAvailable,
-        previousCollaborators:hasApprovedCollaborators,
-        status: true,
-        message: `Collaboration for this document ${isCollaboratorsAvailable.id} has reached maximum`,
+    if (isCollaboratorsAvailable?.id != undefined) {
+      const hasApprovedCollaborators = await prisma.collaborator.findMany({
+        where: {
+          collabId: isCollaboratorsAvailable?.id as string,
+        },
       });
 
-     }
+      const findCollaborator = hasApprovedCollaborators.filter(
+        (collabData: ICollaborators, index: number) =>
+          collabData?.collaboratorEmail == collabUsersEmail
+      );
 
+      if (hasApprovedCollaborators.length < MAX_COLLABORATORS) {
+        if (findCollaborator.length > 0) {
+          res.json({
+            collaboratingDocs: isCollaboratorsAvailable,
+            collaborator: findCollaborator,
+            message: "user is already a collaborator",
+          });
+          return;
+        }
+
+        const joinCollaborators = await prisma?.collaborator?.create({
+          data: {
+            collaboratorEmail: String(collabUsersEmail),
+            isSigned: false as boolean,
+            collabId: isCollaboratorsAvailable?.id as string,
+          },
+        });
+        res.json({
+          collaboratingDocs: isCollaboratorsAvailable,
+          collaborator: joinCollaborators,
+          previousCollaborators: hasApprovedCollaborators,
+          status: true,
+          message: "User is added to Doc Collaboration",
+        });
       } else {
         res.json({
-          message: "No such Document to collaborate.",
+          collaboratingDocs: isCollaboratorsAvailable,
+          previousCollaborators: hasApprovedCollaborators,
+          status: true,
+          message: `Collaboration for this document ${isCollaboratorsAvailable.id} has reached maximum`,
         });
       }
-
+    } else {
+      res.json({
+        message: "No such Document to collaborate.",
+      });
+    }
   } catch (err) {
     res.json({ response: "server Error occured", status: false, error: err });
   }
@@ -448,11 +489,11 @@ export const getCollaboratorDocs = async (
       },
     });
     if (collabDocs?.id != undefined) {
-     const documentCollaborators = await prisma.collaborator.findMany({
-      where:{
-        collabId: (collabDocs.id as string)
-      }
-     })
+      const documentCollaborators = await prisma.collaborator.findMany({
+        where: {
+          collabId: collabDocs.id as string,
+        },
+      });
 
       res.json({
         collaboratingDocuments: collabDocs,
@@ -755,18 +796,17 @@ export const encryptFile = async (
           if (files == undefined) return;
           fs.writeFile(outputPath, files[0]);
 
-          const encryptionData =   await prisma.docsEncryption.create({
-              data:{
-                  decryptionLink:fileLink,
-                  encryptionLink:outputPath,
-                  encryptionPassword:password,
-              },
-              select:{
-                decryptionLink:true,
-                encryptionPassword:true
-              }
-            })
-
+          const encryptionData = await prisma.docsEncryption.create({
+            data: {
+              decryptionLink: fileLink,
+              encryptionLink: outputPath,
+              encryptionPassword: password,
+            },
+            select: {
+              decryptionLink: true,
+              encryptionPassword: true,
+            },
+          });
 
           res.json({
             response: encryptionData,
@@ -792,7 +832,7 @@ export const decryptFile = async (
   next: NextFunction
 ) => {
   try {
-    const { decryptFileName , password  } = req.body;
+    const { decryptFileName, password } = req.body;
 
     const fileLink = getAbsolutePath(
       "../..",
@@ -801,70 +841,73 @@ export const decryptFile = async (
       decryptFileName
     );
 
-     const decryptionData =  await prisma.docsEncryption.findFirst({
-        where:{
-          encryptionLink:fileLink
-        },
-        select:{
-          decryptionLink:true,
-          encryptionPassword:true,
-        }
-       })
+    const decryptionData = await prisma.docsEncryption.findFirst({
+      where: {
+        encryptionLink: fileLink,
+      },
+      select: {
+        decryptionLink: true,
+        encryptionPassword: true,
+      },
+    });
 
-      if(decryptionData?.encryptionPassword != password){
-         res.json({message:"password is not correct " , status:false})
-      }
-    
+    if (decryptionData?.encryptionPassword != password) {
+      res.json({ message: "password is not correct ", status: false });
+    }
 
-      if((decryptionData?.encryptionPassword == password) && (decryptionData?.decryptionLink != undefined)){
-        res.json({response:decryptionData, message:"decryption successfull" , status :true});
-      }
-      if(decryptionData?.decryptionLink == undefined){
-        res.json({ message:"encryption Link not available " , status :false});
-      }
-
+    if (
+      decryptionData?.encryptionPassword == password &&
+      decryptionData?.decryptionLink != undefined
+    ) {
+      res.json({
+        response: decryptionData,
+        message: "decryption successfull",
+        status: true,
+      });
+    }
+    if (decryptionData?.decryptionLink == undefined) {
+      res.json({ message: "encryption Link not available ", status: false });
+    }
   } catch (err) {
     res.json({ message: "server error occured", status: false, error: err });
   }
 };
 
-export const generatePassword = async(
-  req:Request,
-  res:Response,
-  next:NextFunction
-)=>{
-try{
-  let length = req.params.length ; 
-    const passwordGenerate = generateUsersPassword(Number(length))
+export const generatePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    let length = req.params.length;
+    const passwordGenerate = generateUsersPassword(Number(length));
     const hasGenerated = await prisma.generatePassword.findMany({
-      where:{
-        password:passwordGenerate
-      }
-    })
-    if(hasGenerated.length  > 0){
-     const passwordNewPassword = generateUsersPassword(Number(length))
-     prisma.generatePassword.create(
-      {
-        data:{
-          password:passwordNewPassword
-         }
-       })
+      where: {
+        password: passwordGenerate,
+      },
+    });
+    if (hasGenerated.length > 0) {
+      const passwordNewPassword = generateUsersPassword(Number(length));
+      prisma.generatePassword.create({
+        data: {
+          password: passwordNewPassword,
+        },
+      });
 
-      res.json({response: passwordNewPassword, message:"password already exist but new user password is generated"})
-    }else{
+      res.json({
+        response: passwordNewPassword,
+        message: "password already exist but new user password is generated",
+      });
+    } else {
+      prisma.generatePassword.create({
+        data: {
+          password: passwordGenerate,
+        },
+      });
 
-      prisma.generatePassword.create(
-        {
-          data:{
-            password:passwordGenerate
-           }
-         })
-
-         res.json({response: passwordGenerate, message:"password generated"})
+      res.json({ response: passwordGenerate, message: "password generated" });
     }
-}catch(err){
-  res.json({ message: "server error occured", status: false, error: err });
-}
-
-
-}
+  } catch (err) {
+    res.json({ message: "server error occured", status: false, error: err });
+  }
+};

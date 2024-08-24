@@ -21,7 +21,8 @@ import {
   fileConverter,
   encryptFile,
   decryptFile,
-  generatePassword
+  generatePassword,
+  updatePassword
 } from "../controllers";
 import multer from 'multer';
 import { verfyAuthToken as VerifiedAuthToken } from '../middleware/verifyAuth';
@@ -82,6 +83,7 @@ router.post("/login",userLogin);
 router.post("/loginbymail",userLoginByEmail)
 router.post("/useronboarding" , userOnboarding);
 router.post("/passwordrecovery",userRecoverPassword);
+router.patch("/updatepassword",updatePassword);
 
 // router.use(VerifiedAuthToken);
 router.post('/searchuserbyemail' , searchUsersByEmail);
