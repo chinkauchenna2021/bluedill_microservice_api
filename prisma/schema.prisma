@@ -17,82 +17,90 @@ model User {
   company      String
   salt         String
   hashpassword String
-  chat         Chat[]
+  documents        Document[]  @relation("DocumentOwner")
+  collaborations   Collaboration[]
+  Notification Notification[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
 
-model CollaborateDocs {
-  id                  String         @id @default(cuid())
-  docid               String
-  docname             String
-  roomId              String
-  requestingSignature Boolean
-  collaborator        Collaborator[]
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+
+ 
+  model Document {
+    id               String          @id @default(uuid())
+    title            String
+    contentType      ContentType
+    contentPath      String    @db.LongText      // Path to .lexical or .docx files
+    ownerId          String
+    owner            User            @relation("DocumentOwner", fields: [ownerId], references: [id])
+    collaborators    Collaboration[] @relation("DocumentCollaborators")
+    maxCollaborators Int             @default(5)
+    isCollaborationOn Boolean        @default(false)
+    contractTemplate ContractTemplate? @relation(fields: [contractTemplateId], references: [id])
+    contractTemplateId String?
+    createdAt        DateTime        @default(now())
+    updatedAt        DateTime        @updatedAt
+  
+    Notification Notification[]
+
+    @@index([ownerId])
+    @@index([contractTemplateId])
 }
-
-model Collaborator {
-  id                 String          @id @default(cuid())
-  collaboratingUsers CollaborateDocs @relation(fields: [collabId], references: [id])
-  collabId             String
-  collaboratorEmail  String
-  isSigned           Boolean
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-
-  @@index([collabId])
+  
+  model Collaboration {
+    id          String    @id @default(uuid())
+    documentId  String
+    document    Document   @relation("DocumentCollaborators", fields: [documentId], references: [id])
+    userId      String
+    user        User       @relation(fields: [userId], references: [id])
+    role        Role       // Signer or Collaborator
+    signed      Boolean    @default(false)
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+  
+    @@index([documentId])
+    @@index([userId])
 }
-
-model Document {
-  id             String           @id @default(cuid())
-  docid          String           @unique
-  docname        String
-  doclink        String
-  userUpdateDoc  String
-  templateType   String
-  isEncrypted    Boolean          @default(false)
-  securityCode   String?
-  // docsEncryption DocsEncryption[]
-  docformat      String           @default("lexical")
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  
+  model Notification {
+    id          String    @id @default(uuid())
+    userId      String
+    user        User       @relation(fields: [userId], references: [id])
+    documentId  String
+    document    Document   @relation(fields: [documentId], references: [id])
+    type        NotificationType
+    createdAt   DateTime   @default(now())
+  
+    @@index([userId])
+    @@index([documentId])
 }
-
-model DocsEncryption {
-  id                 String   @id @default(cuid())
-  decryptionLink     String
-  encryptionLink     String
-  encryptionPassword String
-  // document           Document @relation(fields: [encryptId], references: [id])
-  encryptDocsId      String @default(cuid())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  @@index([encryptDocsId])
+  
+  model ContractTemplate {
+    id          String    @id @default(uuid())
+    name        String
+    description String
+    filePath    String      @db.LongText     // Path to the template file
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+  
+    Document Document[]
 }
-
-model Chat {
-  id               String   @id @default(cuid())
-  userEmail        String   @unique
-  userMessage      String
-  senderUserId     String
-  receiverUserId   String
-  isReceivedStatus Boolean  @default(false)
-  user             User     @relation(fields: [userId], references: [id])
-  userId           String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([userId])
-}
-
-
-
-model generatePassword{
-    id String @id @default(cuid())
-    password String
-    createdAt        DateTime @default(now())
-    updatedAt        DateTime @updatedAt
-}
+  
+  enum ContentType {
+    LEXICAL
+    DOCX
+  }
+  
+  enum Role {
+    ORIGINATOR
+    COLLABORATOR
+    SIGNER
+  }
+  
+  enum NotificationType {
+    SIGNATURE_REQUEST
+    SIGNATURE_COMPLETED
+    COLLABORATOR_ADDED
+    COLLABORATOR_REMOVED
+  }
+  
