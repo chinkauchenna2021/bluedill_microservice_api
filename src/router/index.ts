@@ -33,6 +33,7 @@ import {
   getContractTemplates,
   signDocument,
   updateDocument,
+  createContractTemplates
 } from "../controllers";
 import multer from "multer";
 import { verfyAuthToken as VerifiedAuthToken } from "../middleware/verifyAuth";
@@ -108,6 +109,7 @@ router.get("/gettempletes", getContractTemplates);
 
 router.patch("/signdocument", signDocument);
 router.patch("/updatedocument", updateDocument);
+router.post('/createtemplate',createContractTemplates)
 
 // router.post("/uploadsingletemplates",upload,adminUploadTemplates);
 // router.post("/chatusers" , usersChat);
