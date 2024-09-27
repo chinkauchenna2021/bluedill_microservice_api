@@ -522,6 +522,28 @@ export const updateDocument = async (req:Request , res:Response,next:NextFunctio
 
 
 
+export const createContractTemplates = async(req:Request,res:Response, next:NextFunction) =>{
+  const {name, description , filePath} = <{name: string, description: string, filePath:string }>req.body
+    try {
+      const newTemplate = await prisma.contractTemplate.create({
+        data: {
+          name,
+         description,
+         filePath, // Path to the template file
+        },
+      });
+
+      res.json({message:"New ContractTemplate Created:", newTemplate , statusCode:201})   
+    } catch (error) {
+      res.json({message : "Error creating ContractTemplate:" ,error ,  statusCode:500 })
+    }
+}
+
+
+
+
+
+
 
 
 

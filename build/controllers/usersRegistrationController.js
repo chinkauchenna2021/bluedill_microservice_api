@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateDocument = exports.signDocument = exports.getContractTemplates = exports.getNotifications = exports.generateDocumentLink = exports.removeCollaborator = exports.toggleCollaboration = exports.requestSignature = exports.addCollaborator = exports.createDocument = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.updatePassword = exports.googleOnboarding = exports.userOnboarding = exports.homePage = void 0;
+exports.userLoginByEmail = exports.updateDocument = exports.signDocument = exports.getContractTemplates = exports.getNotifications = exports.generateDocumentLink = exports.removeCollaborator = exports.toggleCollaboration = exports.requestSignature = exports.addCollaborator = exports.createDocument = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.updatePassword = exports.googleOnboarding = exports.userOnboarding = exports.homePage = void 0;
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const useHook_1 = require("../utilities/useHook");
@@ -670,36 +670,33 @@ exports.updateDocument = updateDocument;
 //     res.json({ response: "server issue occured", status: false });
 //   }
 // };
-// export const userLoginByEmail = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   try {
-//     const { email } = req.body;
-//     const usersLoginResponseByEmail = await prisma.user.findFirst({
-//       where: {
-//         email: email,
-//       },
-//     });
-//     if (usersLoginResponseByEmail) {
-//       const tokenAuth = await usersAuth(
-//         usersLoginResponseByEmail as IRegistration
-//       );
-//       if (tokenAuth) {
-//         res.json({
-//           authToken: tokenAuth,
-//           status: true,
-//           response: usersLoginResponseByEmail,
-//         });
-//       }
-//     } else {
-//       res.json({ response: "user not found ", status: false });
-//     }
-//   } catch {
-//     res.json({ response: "error occured", status: false });
-//   }
-// };
+const userLoginByEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email } = req.body;
+        const usersLoginResponseByEmail = yield client_1.default.user.findFirst({
+            where: {
+                email: email,
+            },
+        });
+        if (usersLoginResponseByEmail) {
+            const tokenAuth = yield (0, useHook_1.usersAuth)(usersLoginResponseByEmail);
+            if (tokenAuth) {
+                res.json({
+                    authToken: tokenAuth,
+                    status: true,
+                    response: usersLoginResponseByEmail,
+                });
+            }
+        }
+        else {
+            res.json({ response: "user not found ", status: false });
+        }
+    }
+    catch (_o) {
+        res.json({ response: "error occured", status: false });
+    }
+});
+exports.userLoginByEmail = userLoginByEmail;
 // export const getChatNotification = async (
 //   req: Request,
 //   res: Response,
