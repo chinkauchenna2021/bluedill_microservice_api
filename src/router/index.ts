@@ -33,7 +33,13 @@ import {
   getContractTemplates,
   signDocument,
   updateDocument,
-  createContractTemplates
+  createContractTemplates,
+  getDocumentsByOwner,
+  deleteDocument,
+  searchUserByEmail,
+  getDocumentCollaborators,
+  getCollaboratedDocuments,
+  getDocumentById
 } from "../controllers";
 import multer from "multer";
 import { verfyAuthToken as VerifiedAuthToken } from "../middleware/verifyAuth";
@@ -103,13 +109,20 @@ router.patch("/togglecollaboration", toggleCollaboration);
 router.patch("/removecollaborator", removeCollaborator);
 router.post("/generateDocumentlink", generateDocumentLink);
 
-router.get("/getnotification", getNotifications); // this uses get params
+router.get("/getnotification", getNotifications);
 
 router.get("/gettempletes", getContractTemplates);
 
 router.patch("/signdocument", signDocument);
 router.patch("/updatedocument", updateDocument);
 router.post('/createtemplate',createContractTemplates)
+router.get('/documents/:ownerId', getDocumentsByOwner);
+router.delete('/documents/:documentId', deleteDocument);
+router.post('/user',searchUserByEmail)
+router.get('/documents/:documentId/collaborators', getDocumentCollaborators);
+router.get('/userdocument/:userId',getCollaboratedDocuments)
+router.get('/documentbyid/:documentId',getDocumentById)
+
 
 // router.post("/uploadsingletemplates",upload,adminUploadTemplates);
 // router.post("/chatusers" , usersChat);

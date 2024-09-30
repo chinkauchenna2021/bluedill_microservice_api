@@ -358,6 +358,7 @@ export const  requestSignature = async(req:Request, res:Response , next:NextFunc
 
 export const toggleCollaboration = async(req:Request , res:Response , next:NextFunction)=>{
   const {documentId ,isCollaborationOn} = <{documentId: string, isCollaborationOn: boolean}>req.body
+  console.log(documentId , isCollaborationOn , " toggled")
 try{
 
     const updatedDocument = await prisma.document.update({
@@ -516,20 +517,14 @@ export const updateDocument = async (req:Request , res:Response,next:NextFunctio
 }
 
 
-
-
-
-
-
-
 export const createContractTemplates = async(req:Request,res:Response, next:NextFunction) =>{
   const {name, description , filePath} = <{name: string, description: string, filePath:string }>req.body
     try {
       const newTemplate = await prisma.contractTemplate.create({
         data: {
-          name,
-         description,
-         filePath, // Path to the template file
+          name:name,
+         description:description,
+         filePath:filePath, // Path to the template file
         },
       });
 
@@ -539,6 +534,213 @@ export const createContractTemplates = async(req:Request,res:Response, next:Next
     }
 }
 
+
+
+
+export const getDocumentsByOwner = async (req: Request, res: Response) => {
+  const { ownerId } = <{ownerId:string}>req.params;
+  try {
+    const documents = await prisma.document.findMany({
+      where: {
+        ownerId,
+      },
+      select: {
+        id: true,                   // Include document ID
+        title: true,
+        contentType: true,
+        contentPath: true,      // Path to .lexical or .docx files
+        ownerId: true,
+        owner: true , 
+        createdAt:true,                // Include document title
+        collaborators: {
+          select: {
+            userId: true,           // Include collaborator user ID
+            role: true,             // Include collaborator role (e.g., SIGNER, COLLABORATOR)
+            user: {                 // If you want to include user details (e.g., name, email)
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({ message: "Documents retrieved successfully", documents, statusCode: 200 });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to retrieve documents", error: err });
+  }
+};
+
+
+
+
+
+export const deleteDocument = async (req: Request, res: Response) => {
+  try {
+    const { documentId } = req.params;
+    const { ownerId } = req.body; // Assuming the request contains the ownerId
+
+    // Fetch the document to verify ownership
+    const document = await prisma.document.findUnique({
+      where: {
+        id: documentId,
+      },
+    });
+
+    // Check if the document exists
+    if (!document) {
+      return res.status(404).json({ message: "Document not found", statusCode: 404 });
+    }
+
+    // Verify that the user requesting the deletion is the owner
+    if (document.ownerId !== ownerId) {
+      return res.status(403).json({ message: "You are not authorized to delete this document", statusCode: 403 });
+    }
+
+    // Delete the document since the owner is verified
+    await prisma.document.delete({
+      where: {
+        id: documentId,
+      },
+    });
+
+    res.json({ message: "Document deleted successfully", statusCode: 200 });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete document", error: err });
+  }
+};
+
+
+
+
+export const searchUserByEmail = async (req: Request, res: Response) => {
+      const { email } = <{email:string}>req.body;
+      console.log(email , "this is the users email")
+  try {
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required', status: false });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: String(email) }, 
+      select: {
+        id: true,
+        email: true,
+        firstname: true,
+        lastname: true,
+        company: true,
+      }, 
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found', status: false });
+    }
+    return res.status(200).json({ message: 'User found', status: true, user });
+    
+  } catch (error: any) {
+    // console.error('Error searching user by email:', error);
+    return res.status(500).json({ message: 'An error occurred', error: error.message });
+  }
+};
+
+
+
+export const getDocumentCollaborators = async (req: Request, res: Response, next: NextFunction) => {
+  const { documentId } = req.params;
+
+  try {
+    // Find the document and its collaborators
+    const document = await prisma.document.findUnique({
+      where: { id: documentId },
+      include: {
+        collaborators: {
+          include: {
+            user: true, // Include user information of each collaborator
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found', statusCode: 404 });
+    }
+
+    // Extract collaborator details
+    const collaborators = document.collaborators.map((collaboration) => collaboration.user);
+
+    res.status(200).json({
+      message: 'Collaborators retrieved successfully',
+      collaborators,
+      statusCode: 200,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to retrieve collaborators', error });
+  }
+};
+
+
+
+
+export const getCollaboratedDocuments = async (req: Request, res: Response) => {
+  const { userId } = <{ userId: string }>req.params; // Assuming you're passing userId as a route parameter
+  
+  try {
+    // Fetch documents where the user is a collaborator
+    const documents = await prisma.document.findMany({
+      where: {
+        collaborators: {
+          some: { userId }, // Check if the userId exists in the collaborators
+        },
+      },
+      include: {
+        collaborators: true, // Optional: Include collaborator details if needed
+      },
+    });
+
+    // Respond with the retrieved documents
+    res.status(200).json({ message: "Collaborated documents retrieved successfully", documents });
+  } catch (error) {
+    console.error(error); // Logging the error for debugging
+    res.status(500).json({ message: "Failed to retrieve collaborated documents", error: error });
+  }
+};
+
+
+
+
+export const getDocumentById = async (req: Request, res: Response) => {
+  const { documentId } = req.params; // Get the document ID from the request parameters
+  try {
+    // Fetch the document by ID
+    const document = await prisma.document.findUnique({
+      where: {
+        id: documentId,
+      },
+      include: {
+        collaborators: {
+          include: {
+            user: true,  // Include the user details for each collaborator
+          },
+        }, // Optional: Include collaborators if needed
+        owner: true,         // Optional: Include owner details if needed
+      },
+    });
+
+    // Check if the document exists
+    if (!document) {
+      return res.status(404).json({ message: "Document not found", statusCode: 404 });
+    }
+
+    // Respond with the retrieved document
+    res.status(200).json({ message: "Document retrieved successfully", document, statusCode: 200 });
+  } catch (error) {
+    console.error('Error retrieving document:', error);
+    res.status(500).json({ message: "Failed to retrieve document", error: error });
+  }
+};
 
 
 

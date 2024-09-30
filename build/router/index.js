@@ -58,10 +58,17 @@ router.post("/requestsignature", controllers_1.requestSignature);
 router.patch("/togglecollaboration", controllers_1.toggleCollaboration);
 router.patch("/removecollaborator", controllers_1.removeCollaborator);
 router.post("/generateDocumentlink", controllers_1.generateDocumentLink);
-router.get("/getnotification", controllers_1.getNotifications); // this uses get params
+router.get("/getnotification", controllers_1.getNotifications);
 router.get("/gettempletes", controllers_1.getContractTemplates);
 router.patch("/signdocument", controllers_1.signDocument);
 router.patch("/updatedocument", controllers_1.updateDocument);
+router.post('/createtemplate', controllers_1.createContractTemplates);
+router.get('/documents/:ownerId', controllers_1.getDocumentsByOwner);
+router.delete('/documents/:documentId', controllers_1.deleteDocument);
+router.post('/user', controllers_1.searchUserByEmail);
+router.get('/documents/:documentId/collaborators', controllers_1.getDocumentCollaborators);
+router.get('/userdocument/:userId', controllers_1.getCollaboratedDocuments);
+router.get('/documentbyid/:documentId', controllers_1.getDocumentById);
 // router.post("/uploadsingletemplates",upload,adminUploadTemplates);
 // router.post("/chatusers" , usersChat);
 // router.post("/usersmessages" , getChatMessage)

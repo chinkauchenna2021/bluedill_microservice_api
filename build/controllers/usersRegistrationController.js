@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userLoginByEmail = exports.createContractTemplates = exports.updateDocument = exports.signDocument = exports.getContractTemplates = exports.getNotifications = exports.generateDocumentLink = exports.removeCollaborator = exports.toggleCollaboration = exports.requestSignature = exports.addCollaborator = exports.createDocument = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.updatePassword = exports.googleOnboarding = exports.userOnboarding = exports.homePage = void 0;
+exports.userLoginByEmail = exports.getDocumentById = exports.getCollaboratedDocuments = exports.getDocumentCollaborators = exports.searchUserByEmail = exports.deleteDocument = exports.getDocumentsByOwner = exports.createContractTemplates = exports.updateDocument = exports.signDocument = exports.getContractTemplates = exports.getNotifications = exports.generateDocumentLink = exports.removeCollaborator = exports.toggleCollaboration = exports.requestSignature = exports.addCollaborator = exports.createDocument = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.updatePassword = exports.googleOnboarding = exports.userOnboarding = exports.homePage = void 0;
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const useHook_1 = require("../utilities/useHook");
@@ -284,6 +284,7 @@ const requestSignature = (req, res, next) => __awaiter(void 0, void 0, void 0, f
 exports.requestSignature = requestSignature;
 const toggleCollaboration = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { documentId, isCollaborationOn } = req.body;
+    console.log(documentId, isCollaborationOn, " toggled");
     try {
         const updatedDocument = yield client_1.default.document.update({
             where: { id: documentId },
@@ -424,9 +425,9 @@ const createContractTemplates = (req, res, next) => __awaiter(void 0, void 0, vo
     try {
         const newTemplate = yield client_1.default.contractTemplate.create({
             data: {
-                name,
-                description,
-                filePath, // Path to the template file
+                name: name,
+                description: description,
+                filePath: filePath, // Path to the template file
             },
         });
         res.json({ message: "New ContractTemplate Created:", newTemplate, statusCode: 201 });
@@ -436,6 +437,185 @@ const createContractTemplates = (req, res, next) => __awaiter(void 0, void 0, vo
     }
 });
 exports.createContractTemplates = createContractTemplates;
+const getDocumentsByOwner = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { ownerId } = req.params;
+    try {
+        const documents = yield client_1.default.document.findMany({
+            where: {
+                ownerId,
+            },
+            select: {
+                id: true,
+                title: true,
+                contentType: true,
+                contentPath: true,
+                ownerId: true,
+                owner: true,
+                createdAt: true,
+                collaborators: {
+                    select: {
+                        userId: true,
+                        role: true,
+                        user: {
+                            select: {
+                                firstname: true,
+                                lastname: true,
+                                email: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        res.json({ message: "Documents retrieved successfully", documents, statusCode: 200 });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Failed to retrieve documents", error: err });
+    }
+});
+exports.getDocumentsByOwner = getDocumentsByOwner;
+const deleteDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { documentId } = req.params;
+        const { ownerId } = req.body; // Assuming the request contains the ownerId
+        // Fetch the document to verify ownership
+        const document = yield client_1.default.document.findUnique({
+            where: {
+                id: documentId,
+            },
+        });
+        // Check if the document exists
+        if (!document) {
+            return res.status(404).json({ message: "Document not found", statusCode: 404 });
+        }
+        // Verify that the user requesting the deletion is the owner
+        if (document.ownerId !== ownerId) {
+            return res.status(403).json({ message: "You are not authorized to delete this document", statusCode: 403 });
+        }
+        // Delete the document since the owner is verified
+        yield client_1.default.document.delete({
+            where: {
+                id: documentId,
+            },
+        });
+        res.json({ message: "Document deleted successfully", statusCode: 200 });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Failed to delete document", error: err });
+    }
+});
+exports.deleteDocument = deleteDocument;
+const searchUserByEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    console.log(email, "this is the users email");
+    try {
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required', status: false });
+        }
+        const user = yield client_1.default.user.findUnique({
+            where: { email: String(email) },
+            select: {
+                id: true,
+                email: true,
+                firstname: true,
+                lastname: true,
+                company: true,
+            },
+        });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found', status: false });
+        }
+        return res.status(200).json({ message: 'User found', status: true, user });
+    }
+    catch (error) {
+        // console.error('Error searching user by email:', error);
+        return res.status(500).json({ message: 'An error occurred', error: error.message });
+    }
+});
+exports.searchUserByEmail = searchUserByEmail;
+const getDocumentCollaborators = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { documentId } = req.params;
+    try {
+        // Find the document and its collaborators
+        const document = yield client_1.default.document.findUnique({
+            where: { id: documentId },
+            include: {
+                collaborators: {
+                    include: {
+                        user: true, // Include user information of each collaborator
+                    },
+                },
+            },
+        });
+        if (!document) {
+            return res.status(404).json({ message: 'Document not found', statusCode: 404 });
+        }
+        // Extract collaborator details
+        const collaborators = document.collaborators.map((collaboration) => collaboration.user);
+        res.status(200).json({
+            message: 'Collaborators retrieved successfully',
+            collaborators,
+            statusCode: 200,
+        });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Failed to retrieve collaborators', error });
+    }
+});
+exports.getDocumentCollaborators = getDocumentCollaborators;
+const getCollaboratedDocuments = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params; // Assuming you're passing userId as a route parameter
+    try {
+        // Fetch documents where the user is a collaborator
+        const documents = yield client_1.default.document.findMany({
+            where: {
+                collaborators: {
+                    some: { userId }, // Check if the userId exists in the collaborators
+                },
+            },
+            include: {
+                collaborators: true, // Optional: Include collaborator details if needed
+            },
+        });
+        // Respond with the retrieved documents
+        res.status(200).json({ message: "Collaborated documents retrieved successfully", documents });
+    }
+    catch (error) {
+        console.error(error); // Logging the error for debugging
+        res.status(500).json({ message: "Failed to retrieve collaborated documents", error: error });
+    }
+});
+exports.getCollaboratedDocuments = getCollaboratedDocuments;
+const getDocumentById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { documentId } = req.params; // Get the document ID from the request parameters
+    try {
+        // Fetch the document by ID
+        const document = yield client_1.default.document.findUnique({
+            where: {
+                id: documentId,
+            },
+            include: {
+                collaborators: {
+                    include: {
+                        user: true, // Include the user details for each collaborator
+                    },
+                },
+                owner: true, // Optional: Include owner details if needed
+            },
+        });
+        // Check if the document exists
+        if (!document) {
+            return res.status(404).json({ message: "Document not found", statusCode: 404 });
+        }
+        // Respond with the retrieved document
+        res.status(200).json({ message: "Document retrieved successfully", document, statusCode: 200 });
+    }
+    catch (error) {
+        console.error('Error retrieving document:', error);
+        res.status(500).json({ message: "Failed to retrieve document", error: error });
+    }
+});
+exports.getDocumentById = getDocumentById;
 // export const adminUploadTemplates = async (
 //   req: Request,
 //   res: Response,
