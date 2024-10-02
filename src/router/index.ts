@@ -39,7 +39,8 @@ import {
   searchUserByEmail,
   getDocumentCollaborators,
   getCollaboratedDocuments,
-  getDocumentById
+  getDocumentById,
+  deleteNotification
 } from "../controllers";
 import multer from "multer";
 import { verfyAuthToken as VerifiedAuthToken } from "../middleware/verifyAuth";
@@ -109,11 +110,11 @@ router.patch("/togglecollaboration", toggleCollaboration);
 router.patch("/removecollaborator", removeCollaborator);
 router.post("/generateDocumentlink", generateDocumentLink);
 
-router.get("/getnotification", getNotifications);
+router.get("/getnotification/:userId", getNotifications);
 
 router.get("/gettempletes", getContractTemplates);
 
-router.patch("/signdocument", signDocument);
+router.post("/signdocument", signDocument);
 router.patch("/updatedocument", updateDocument);
 router.post('/createtemplate',createContractTemplates)
 router.get('/documents/:ownerId', getDocumentsByOwner);
@@ -122,6 +123,7 @@ router.post('/user',searchUserByEmail)
 router.get('/documents/:documentId/collaborators', getDocumentCollaborators);
 router.get('/userdocument/:userId',getCollaboratedDocuments)
 router.get('/documentbyid/:documentId',getDocumentById)
+router.delete('/deletenotification',deleteNotification)
 
 
 // router.post("/uploadsingletemplates",upload,adminUploadTemplates);
