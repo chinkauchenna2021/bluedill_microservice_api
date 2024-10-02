@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userLoginByEmail = exports.getDocumentById = exports.getCollaboratedDocuments = exports.getDocumentCollaborators = exports.searchUserByEmail = exports.deleteDocument = exports.getDocumentsByOwner = exports.createContractTemplates = exports.updateDocument = exports.signDocument = exports.getContractTemplates = exports.getNotifications = exports.generateDocumentLink = exports.removeCollaborator = exports.toggleCollaboration = exports.requestSignature = exports.addCollaborator = exports.createDocument = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.updatePassword = exports.googleOnboarding = exports.userOnboarding = exports.homePage = void 0;
+exports.userLoginByEmail = exports.deleteNotification = exports.getDocumentById = exports.getCollaboratedDocuments = exports.getDocumentCollaborators = exports.searchUserByEmail = exports.deleteDocument = exports.getDocumentsByOwner = exports.createContractTemplates = exports.updateDocument = exports.signDocument = exports.getContractTemplates = exports.getNotifications = exports.generateDocumentLink = exports.removeCollaborator = exports.toggleCollaboration = exports.requestSignature = exports.addCollaborator = exports.createDocument = exports.searchUsersByEmail = exports.userRecoverPassword = exports.userLogin = exports.updatePassword = exports.googleOnboarding = exports.userOnboarding = exports.homePage = void 0;
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const useHook_1 = require("../utilities/useHook");
@@ -275,7 +275,16 @@ const requestSignature = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 type: 'SIGNATURE_REQUEST',
             },
         });
-        res.json({ message: "signature requested successfully", notification, statusCode: 201 });
+        const updatedCollaboration = yield client_1.default.collaboration.updateMany({
+            where: {
+                documentId,
+                userId: signerId,
+            },
+            data: {
+                role: 'SIGNER', // Update the role to SIGNER
+            },
+        });
+        res.json({ message: "signature requested successfully", notification, updatedCollaboration, statusCode: 201 });
     }
     catch (err) {
         res.json({ message: " signature requested failed", err, statusCode: 500 });
@@ -344,7 +353,8 @@ const generateDocumentLink = (req, res, next) => __awaiter(void 0, void 0, void 
 exports.generateDocumentLink = generateDocumentLink;
 //   Viewing Notifications
 const getNotifications = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId } = req.query; // Extract userId from query params
+    const { userId } = req.params;
+    console.log(userId, "id sent");
     if (!userId) {
         return res.status(400).json({ message: "User ID is required", statusCode: 400 });
     }
@@ -355,6 +365,29 @@ const getNotifications = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             },
             orderBy: {
                 createdAt: 'desc',
+            },
+            include: {
+                document: {
+                    select: {
+                        id: true,
+                        title: true,
+                        contentType: true,
+                        owner: {
+                            select: {
+                                firstname: true,
+                                lastname: true,
+                                email: true,
+                            },
+                        },
+                    },
+                },
+                user: {
+                    select: {
+                        firstname: true,
+                        lastname: true,
+                        email: true,
+                    },
+                },
             },
         });
         res.status(200).json({
@@ -384,6 +417,7 @@ const getContractTemplates = (req, res, next) => __awaiter(void 0, void 0, void 
 exports.getContractTemplates = getContractTemplates;
 const signDocument = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { documentId, userId } = req.body;
+    console.log(documentId, userId, " data received ");
     try {
         const updatedCollaboration = yield client_1.default.collaboration.updateMany({
             where: {
@@ -565,19 +599,38 @@ const getDocumentCollaborators = (req, res, next) => __awaiter(void 0, void 0, v
 exports.getDocumentCollaborators = getDocumentCollaborators;
 const getCollaboratedDocuments = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.params; // Assuming you're passing userId as a route parameter
+    console.log(userId, " user id generated");
     try {
-        // Fetch documents where the user is a collaborator
         const documents = yield client_1.default.document.findMany({
             where: {
                 collaborators: {
-                    some: { userId }, // Check if the userId exists in the collaborators
+                    some: {
+                        userId,
+                    },
                 },
             },
-            include: {
-                collaborators: true, // Optional: Include collaborator details if needed
+            select: {
+                id: true,
+                title: true,
+                contentType: true,
+                contentPath: true,
+                ownerId: true,
+                createdAt: true,
+                updatedAt: true,
+                collaborators: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                firstname: true,
+                                lastname: true,
+                                email: true,
+                            },
+                        },
+                    },
+                },
             },
         });
-        // Respond with the retrieved documents
         res.status(200).json({ message: "Collaborated documents retrieved successfully", documents });
     }
     catch (error) {
@@ -616,6 +669,35 @@ const getDocumentById = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.getDocumentById = getDocumentById;
+function deleteNotification(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { notificationId } = req.body;
+        console.log(notificationId, "Notification ID received");
+        try {
+            // Delete the notification with the provided ID
+            const deletedNotification = yield client_1.default.notification.delete({
+                where: {
+                    id: notificationId,
+                },
+            });
+            res.json({
+                message: "Notification deleted successfully",
+                deletedNotification,
+                statusCode: 200,
+            });
+        }
+        catch (err) {
+            console.error("Error deleting notification:", err);
+            res.status(500).json({
+                message: "Failed to delete notification",
+                statusCode: 500,
+                error: err,
+            });
+        }
+    });
+}
+exports.deleteNotification = deleteNotification;
+;
 // export const adminUploadTemplates = async (
 //   req: Request,
 //   res: Response,
