@@ -336,7 +336,6 @@ const {documentId ,collaboratorId} = <{documentId: string, collaboratorId: strin
   }
 }
 
-
 export const  requestSignature = async(req:Request, res:Response , next:NextFunction)=>{
 
   const {documentId ,signerId} = <{documentId: string, signerId: string}>req.body
@@ -348,8 +347,18 @@ export const  requestSignature = async(req:Request, res:Response , next:NextFunc
           type: 'SIGNATURE_REQUEST',
         },
       });
+
+    const updatedCollaboration = await prisma.collaboration.updateMany({
+      where: {
+        documentId,
+        userId: signerId,
+      },
+      data: {
+        role: 'SIGNER',  // Update the role to SIGNER
+      },
+    });
     
-       res.json({message:"signature requested successfully", notification , statusCode:201}) 
+       res.json({message:"signature requested successfully", notification,  updatedCollaboration ,  statusCode:201}) 
     }catch(err){
       res.json({message : " signature requested failed" ,err ,  statusCode:500 })
     }
@@ -428,8 +437,8 @@ export const generateDocumentLink = async (req:Request , res:Response , next:Nex
 //   Viewing Notifications
 
 export const getNotifications = async (req: Request, res: Response, next: NextFunction) => {
-  const { userId } = <{ userId: string }>req.query;  // Extract userId from query params
-
+  const { userId } = req.params;
+    console.log(userId, "id sent")
   if (!userId) {
     return res.status(400).json({ message: "User ID is required", statusCode: 400 });
   }
@@ -441,6 +450,29 @@ export const getNotifications = async (req: Request, res: Response, next: NextFu
       },
       orderBy: {
         createdAt: 'desc',
+      },
+      include: {
+        document: {
+          select: {
+            id: true,
+            title: true,
+            contentType: true,
+            owner: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            firstname: true,
+            lastname: true,
+            email: true,
+          },
+        },
       },
     });
     
@@ -475,8 +507,8 @@ export const getContractTemplates = async(req:Request,res:Response, next:NextFun
 
 export const signDocument = async (req:Request , res:Response,next:NextFunction) =>{
   const {documentId, userId} = <{documentId: string, userId: string}>req.body
+  console.log(documentId , userId , " data received ")
   try{
-
       const updatedCollaboration = await prisma.collaboration.updateMany({
         where: {
           documentId,
@@ -685,22 +717,40 @@ export const getDocumentCollaborators = async (req: Request, res: Response, next
 
 
 export const getCollaboratedDocuments = async (req: Request, res: Response) => {
-  const { userId } = <{ userId: string }>req.params; // Assuming you're passing userId as a route parameter
-  
+  const { userId } = req.params; // Assuming you're passing userId as a route parameter
+    console.log(userId , " user id generated");
   try {
-    // Fetch documents where the user is a collaborator
     const documents = await prisma.document.findMany({
       where: {
         collaborators: {
-          some: { userId }, // Check if the userId exists in the collaborators
+          some: {
+            userId, 
+          },
         },
       },
-      include: {
-        collaborators: true, // Optional: Include collaborator details if needed
+      select: {
+        id: true,               
+        title: true,            
+        contentType: true,       
+        contentPath: true,       
+        ownerId: true,           
+        createdAt: true,       
+        updatedAt: true,        
+        collaborators: {         
+          include: {
+            user: {             
+              select: {
+                id: true,       
+                firstname: true,  
+                lastname: true,
+                email: true,     
+              },
+            },
+          },
+        },
       },
     });
 
-    // Respond with the retrieved documents
     res.status(200).json({ message: "Collaborated documents retrieved successfully", documents });
   } catch (error) {
     console.error(error); // Logging the error for debugging
@@ -741,6 +791,76 @@ export const getDocumentById = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to retrieve document", error: error });
   }
 };
+
+
+
+
+
+export async function deleteNotification(req: Request, res: Response, next: NextFunction){
+  const { notificationId } = <{ notificationId: string }>req.body;
+
+  console.log(notificationId, "Notification ID received");
+
+  try {
+    // Delete the notification with the provided ID
+    const deletedNotification = await prisma.notification.delete({
+      where: {
+        id: notificationId,
+      },
+    });
+
+    res.json({
+      message: "Notification deleted successfully",
+      deletedNotification,
+      statusCode: 200,
+    });
+  } catch (err) {
+    console.error("Error deleting notification:", err);
+
+    res.status(500).json({
+      message: "Failed to delete notification",
+      statusCode: 500,
+      error: err,
+    });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
